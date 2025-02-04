@@ -4,7 +4,7 @@ import pathlib
 from pathlib import Path
 
 # Documentation to run the Himalayan Database on MacOS can be found here: https://www.himalayandatabase.com/crossover.html
-data_path = Path('Himalayan_Database/HIMDATA')
+data_path = Path('data/himalayas_data')
 
 dbf_files = {
     "exped": data_path / "exped.DBF", # year range is 1905 - 2024
@@ -30,9 +30,9 @@ for name, file_path in dbf_files.items():
     metadata_columns[name] = extract_metadata(file_path)
 
 # Printing loop
-# for file, columns in metadata_columns.items():
-#     print(f"\nMetadata for {file}:")
-#     if columns:
-#         print(columns)
-#     else:
-#         print("Could not read columns.")
+for file, columns in metadata_columns.items():
+    print(f"\nMetadata for {file}:")
+    if columns:
+        print(columns)
+    else:
+        print("Could not read columns.")
