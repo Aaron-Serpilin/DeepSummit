@@ -41,9 +41,7 @@ for name, file_path in himalaya_files.items():
 ##### The following code is for the extraction of data from the EU's Copernicus Climate Data Store "ERA5 hourly data on single levels from 1940 to present" dataset
 import cdsapi
 import os
-
-client = cdsapi.Client()
-era5_dataset = "reanalysis-era5-single-levels"
+import concurrent.futures
 
 # Buffered coordinates = Exact coordinates +- 1.5° to incorporate relevant surrounding meteorological data
 mountain_areas = {
@@ -180,6 +178,8 @@ base_request = {
     "area": []
 }
 
+client = cdsapi.Client()
+era5_dataset = "reanalysis-era5-single-levels"
 era5_data_path = Path('data/era5_data')
 era5_data_path.mkdir(parents=True, exist_ok=True)
 total_size = 0
@@ -193,26 +193,51 @@ for year in range(2024, 1940, -4):
 year_batches.append([1940]) # we have 85 values where 85 % 4 = 1, so the last value will be in its own batch
 # print(year_batches)
 
-# Documentation to run the request: https://cds.climate.copernicus.eu/how-to-api
-for mountain, area in mountain_areas.items():
+def download_batch (mountain, area, year_batch, mountain_folder):
+    """
+    Function to request ERA5 data in parallel since the download time depends on the API processing the request.
+    """
 
-    print(f"Downloading data for {mountain}...")
-    mountain_folder = era5_data_path / mountain
-    mountain_folder.mkdir(parents=True, exist_ok=True)
+    batch_start, batch_end = year_batch[0], year_batch[-1]
+    file_path = mountain_folder / f"{mountain}_{batch_start}_{batch_end}.grib"
+    request = base_request.copy()
+    request["year"] = [str(y) for y in year_batch]
+    request["area"] = area
+    print(f"Requesting {mountain} for {batch_start}-{batch_end}...")
 
-    for year_batch in year_batches:
-
-        batch_start, batch_end = year_batch[0], year_batch[-1]
-        file_path = mountain_folder / f"{mountain}_{batch_start}_{batch_end}.grib"
-        request = base_request.copy()
-        request["year"] = [str(y) for y in year_batch]
-        request["area"] = area
+    try:
         client.retrieve(era5_dataset, request, str(file_path))
-        total_size += file_path.stat().st_size if file_path.exists() else 0
+        file_size = file_path.stat().st_size if file_path.exists() else 0
+        return file_size
+    except Exception as e:
+        print(f"Error retrieving data for {mountain} {batch_start}-{batch_end}: {e}")
+        return 0
 
-    print(f"Data for {mountain} saved as {file_path}.")
+# Documentation to run the request: https://cds.climate.copernicus.eu/how-to-api
+# We have 22 requests per mountain since 85 % 4 = 1. We have 14 mountains, so 294 requests in total
+with concurrent.futures.ThreadPoolExecutor(max_workers=294) as executor:
+    batch_to_request = {}
+
+    for mountain, area in mountain_areas.items():
+
+        print(f"Downloading data for {mountain}...")
+        mountain_folder = era5_data_path / mountain
+        mountain_folder.mkdir(parents=True, exist_ok=True)
+
+        for year_batch in year_batches:
+            next_batch = executor.submit(download_batch, mountain, area, year_batch, mountain_folder)
+            batch_to_request[next_batch] = (mountain, year_batch)
+    
+    for future in concurrent.futures.as_completed(batch_to_request):
+        mountain, year_batch = batch_to_request[next_batch]
+        
+        try:
+            size = next_batch.result()
+            total_size += size
+            print(f"Completed {mountain} {year_batch[0]}-{year_batch[-1]}. File size: {size / (1024 * 1024):.2f} MB")
+        except Exception as e:
+            print(f"Download failed for {mountain} {year_batch[0]}-{year_batch[-1]}: {e}")
 
 total_size_mb = total_size / (1024 * 1024)
 total_size_gb = total_size_mb / 1024
-
-print("All downloads completed successfully! Total file size; {total_size_gb}")
+print("All downloads completed successfully! Total file size; {total_size_gb:.2f} GB")
