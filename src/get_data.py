@@ -193,29 +193,50 @@ for year in range(2024, 1940, -4):
 year_batches.append([1940]) # we have 85 values where 85 % 4 = 1, so the last value will be in its own batch
 # print(year_batches)
 
+stop_requests = False
+
 def download_batch (mountain, area, year_batch, mountain_folder):
     """
     Function to request ERA5 data in parallel since the download time depends on the API processing the request.
     """
 
+    global stop_requests
+    if stop_requests:
+        return 0
+
     batch_start, batch_end = year_batch[0], year_batch[-1]
     file_path = mountain_folder / f"{mountain}_{batch_start}_{batch_end}.grib"
+
+    if file_path.exists():
+        print(f"Skipping {mountain}_{batch_start}_{batch_end}. Already downloaded.")
+        return file_path.stat().st_size
+
     request = base_request.copy()
     request["year"] = [str(y) for y in year_batch]
     request["area"] = area
     print(f"Requesting {mountain} for {batch_start}-{batch_end}...")
 
     try:
+
         client.retrieve(era5_dataset, request, str(file_path))
         file_size = file_path.stat().st_size if file_path.exists() else 0
         return file_size
+    
     except Exception as e:
+
+        error_message = str(e)
+
+        if "Number of API queued requests for this dataset is temporally limited." in error_message:
+            print("API limit reached. Stopping all new requests.")
+            stop_requests = True
+            return None
+        
         print(f"Error retrieving data for {mountain} {batch_start}-{batch_end}: {e}")
         return 0
 
 # Documentation to run the request: https://cds.climate.copernicus.eu/how-to-api
 # We have 22 requests per mountain since 85 % 4 = 1. We have 14 mountains, so 294 requests in total
-with concurrent.futures.ThreadPoolExecutor(max_workers=294) as executor:
+with concurrent.futures.ThreadPoolExecutor(max_workers=40) as executor:
     batch_to_request = {}
 
     for mountain, area in mountain_areas.items():
@@ -228,13 +249,19 @@ with concurrent.futures.ThreadPoolExecutor(max_workers=294) as executor:
             next_batch = executor.submit(download_batch, mountain, area, year_batch, mountain_folder)
             batch_to_request[next_batch] = (mountain, year_batch)
     
-    for future in concurrent.futures.as_completed(batch_to_request):
+    for next_batch in concurrent.futures.as_completed(batch_to_request):
         mountain, year_batch = batch_to_request[next_batch]
+
+        if stop_requests:
+            print("Stopping requests due to API limit.")
+            executor.shutdown(wait=False)
+            exit()
         
         try:
             size = next_batch.result()
             total_size += size
             print(f"Completed {mountain} {year_batch[0]}-{year_batch[-1]}. File size: {size / (1024 * 1024):.2f} MB")
+
         except Exception as e:
             print(f"Download failed for {mountain} {year_batch[0]}-{year_batch[-1]}: {e}")
 
