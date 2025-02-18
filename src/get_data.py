@@ -20,8 +20,6 @@ metadata_columns = {}
 def extract_metadata(file_path: Path):
     try:
         df = gpd.read_file(file_path) 
-        # Following line prints out teh total number of rows in the dataset: 11425
-        # print(f"Year length: {len(df['YEAR'])}\nHOST length: {len(df['HOST'])}\nSeason Length: {len(df['SEASON'])}")
         return list(df.columns)  
     except Exception as e:
         print(f"Error reading {file_path}: {e}")
@@ -42,24 +40,6 @@ for name, file_path in himalaya_files.items():
 import cdsapi
 import os
 import concurrent.futures
-
-# Buffered coordinates = Exact coordinates +- 1.5° to incorporate relevant surrounding meteorological data
-mountain_areas = {
-    "Everest": [29.29, 85.25, 26.29, 88.25],
-    "K2": [37.22, 75.00, 34.22, 78.00],
-    "Kangchenjunga": [29.12, 86.38, 26.12, 89.38],
-    "Lhotse": [29.27, 85.25, 26.27, 88.25],
-    "Makalu": [29.23, 85.35, 26.23, 88.35],
-    "Cho Oyu": [29.35, 85.09, 26.35, 88.09],
-    "Dhaulagiri I": [30.11, 81.59, 27.11, 84.59],
-    "Manaslu": [30.03, 83.03, 27.03, 86.03],
-    "Nanga Parbat": [36.44, 73.05, 33.44, 76.05],
-    "Annapurna I": [30.05, 82.19, 27.05, 85.19],
-    "Gasherbrum I": [37.13, 75.11, 34.13, 78.11],
-    "Broad Peak": [37.18, 75.04, 34.18, 78.04],
-    "Gasherbrum II": [37.15, 75.09, 34.15, 78.09],
-    "Shishapangma": [29.51, 84.16, 26.51, 87.16],
-}
 
 base_request = {
     "product_type": ["reanalysis"],
@@ -121,44 +101,8 @@ base_request = {
         "temperature_of_snow_layer",
         "total_column_snow_water"
     ],
-    # "year": [
-    #     "1940", "1941", "1942",
-    #     "1943", "1944", "1945",
-    #     "1946", "1947", "1948",
-    #     "1949", "1950", "1951",
-    #     "1952", "1953", "1954",
-    #     "1955", "1956", "1957",
-    #     "1958", "1959", "1960",
-    #     "1961", "1962", "1963",
-    #     "1964", "1965", "1966",
-    #     "1967", "1968", "1969",
-    #     "1970", "1971", "1972",
-    #     "1973", "1974", "1975",
-    #     "1976", "1977", "1978",
-    #     "1979", "1980", "1981",
-    #     "1982", "1983", "1984",
-    #     "1985", "1986", "1987",
-    #     "1988", "1989", "1990",
-    #     "1991", "1992", "1993",
-    #     "1994", "1995", "1996",
-    #     "1997", "1998", "1999",
-    #     "2000", "2001", "2002",
-    #     "2003", "2004", "2005",
-    #     "2006", "2007", "2008",
-    #     "2009", "2010", "2011",
-    #     "2012", "2013", "2014",
-    #     "2015", "2016", "2017",
-    #     "2018", "2019", "2020",
-    #     "2021", "2022", "2023",
-    #     "2024"
-    # ],
-    "year": [],
-    "month": [
-        "01", "02", "03",
-        "04", "05", "06",
-        "07", "08", "09",
-        "10", "11", "12"
-    ],
+    "year": [], # We leave this empty since we have to customize each batch due to the API limit
+    "month": [], # We leave this empty to loop through each month_number individually
     "day": [
         "01", "02", "03",
         "04", "05", "06",
@@ -171,100 +115,102 @@ base_request = {
         "25", "26", "27",
         "28", "29", "30",
         "31"
-    ],
+        ],
     "time": ["00:00"],
     "data_format": "grib",
     "download_format": "zip",
     "area": []
 }
 
+# Buffered coordinates = Exact coordinates +- 1.5° to incorporate relevant surrounding meteorological data
+mountain_areas = {
+    "Everest": ["29.29", "85.25", "26.29", "88.25"],
+    "K2": ["37.22", "75.00", "34.22", "78.00"],
+    "Kangchenjunga": ["29.12", "86.38", "26.12", "89.38"],
+    "Lhotse": ["29.27", "85.25", "26.27", "88.25"],
+    "Makalu": ["29.23", "85.35", "26.23", "88.35"],
+    "Cho Oyu": ["29.35", "85.09", "26.35", "88.09"],
+    "Dhaulagiri I": ["30.11", "81.59", "27.11", "84.59"],
+    "Manaslu": ["30.03", "83.03", "27.03", "86.03"],
+    "Nanga Parbat": ["36.44", "73.05", "33.44", "76.05"],
+    "Annapurna I": ["30.05", "82.19", "27.05", "85.19"],
+    "Gasherbrum I": ["37.13", "75.11", "34.13", "78.11"],
+    "Broad Peak": ["37.18", "75.04", "34.18", "78.04"],
+    "Gasherbrum II": ["37.15", "75.09", "34.15", "78.09"],
+    "Shishapangma": ["29.51", "84.16", "26.51", "87.16"],
+}
+
 client = cdsapi.Client()
 era5_dataset = "reanalysis-era5-single-levels"
 era5_data_path = Path('data/era5_data')
 era5_data_path.mkdir(parents=True, exist_ok=True)
-total_size = 0
 
-# 5-year consecutive batches due to API request limits
-year_batches = []
-for year in range(2024, 1940, -4):
-    batch = [year, year - 1, year - 2, year - 3]
-    year_batches.append(batch)
+first_batch = [year for year in range(1940, 1982)]
+second_batch = [year for year in range(1982, 2025)]
 
-year_batches.append([1940]) # we have 85 values where 85 % 4 = 1, so the last value will be in its own batch
-# print(year_batches)
+month_numbers = {
+    "01": "January",
+    "02": "February",
+    "03": "March",
+    "04": "April",
+    "05": "May",
+    "06": "June",
+    "07": "July",
+    "08": "August",
+    "09": "September",
+    "10": "October",
+    "11": "November",
+    "12": "December",
+}
 
-stop_requests = False
-
-def download_batch (mountain, area, year_batch, mountain_folder):
+def submit_request(mountain, month_number, year_batch):
     """
-    Function to request ERA5 data in parallel since the download time depends on the API processing the request.
+    Submits a data request to the ERA5 API without waiting for download since each requests takes hours to process. 
     """
 
-    global stop_requests
-    if stop_requests:
-        return 0
-
-    batch_start, batch_end = year_batch[0], year_batch[-1]
-    file_path = mountain_folder / f"{mountain}_{batch_start}_{batch_end}.grib"
-
-    if file_path.exists():
-        print(f"Skipping {mountain}_{batch_start}_{batch_end}. Already downloaded.")
-        return file_path.stat().st_size
-
+    month_name = month_numbers[month_number]
+    start_year, end_year = year_batch[0], year_batch[-1]
     request = base_request.copy()
-    request["year"] = [str(y) for y in year_batch]
-    request["area"] = area
-    print(f"Requesting {mountain} for {batch_start}-{batch_end}...")
+    request["year"] = year_batch
+    request["month"] = [month_number]
+    request["area"] = mountain_areas[mountain]
+
+    print(f"Submitting request for {mountain} - {month_name} {start_year}-{end_year}...")
 
     try:
+        client.retrieve(era5_dataset, request) 
+        print(f"Request submitted for {mountain} - {month_name} {start_year}-{end_year}")
 
-        client.retrieve(era5_dataset, request, str(file_path))
-        file_size = file_path.stat().st_size if file_path.exists() else 0
-        return file_size
-    
     except Exception as e:
+        print(f"Error submitting request for {mountain} - {month_name} {start_year}-{end_year}: {e}")
 
-        error_message = str(e)
 
-        if "Number of API queued requests for this dataset is temporally limited." in error_message:
-            print("API limit reached. Stopping all new requests.")
-            stop_requests = True
-            return None
-        
-        print(f"Error retrieving data for {mountain} {batch_start}-{batch_end}: {e}")
-        return 0
+def request_mountain_data (mountain):
+    """
+    Submits 24 requests (12 months x 2 year batches) for a given mountain to not overload the API.
+    """
 
-# Documentation to run the request: https://cds.climate.copernicus.eu/how-to-api
-# We have 22 requests per mountain since 85 % 4 = 1. We have 14 mountains, so 294 requests in total
-with concurrent.futures.ThreadPoolExecutor(max_workers=40) as executor:
-    batch_to_request = {}
+    mountain_folder = era5_data_path / mountain
+    mountain_folder.mkdir(parents=True, exist_ok=True)
 
-    for mountain, area in mountain_areas.items():
+    for month_number, month_name in month_numbers.items():
+        (mountain_folder / month_name).mkdir(parents=True, exist_ok=True)
 
-        print(f"Downloading data for {mountain}...")
-        mountain_folder = era5_data_path / mountain
-        mountain_folder.mkdir(parents=True, exist_ok=True)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=12) as executor:
+        future_requests = {}
 
-        for year_batch in year_batches:
-            next_batch = executor.submit(download_batch, mountain, area, year_batch, mountain_folder)
-            batch_to_request[next_batch] = (mountain, year_batch)
-    
-    for next_batch in concurrent.futures.as_completed(batch_to_request):
-        mountain, year_batch = batch_to_request[next_batch]
+        for month_number in month_numbers.keys():
+            for year_batch in [first_batch, second_batch]:
+                next_batch = executor.submit(submit_request, mountain, month_number, year_batch)
+                future_requests[next_batch] = (mountain, month_number, year_batch)
 
-        if stop_requests:
-            print("Stopping requests due to API limit.")
-            executor.shutdown(wait=False)
-            exit()
-        
-        try:
-            size = next_batch.result()
-            total_size += size
-            print(f"Completed {mountain} {year_batch[0]}-{year_batch[-1]}. File size: {size / (1024 * 1024):.2f} MB")
+        for next_batch in concurrent.futures.as_completed(future_requests):
+            mountain, month_number, year_batch = future_requests[next_batch]
 
-        except Exception as e:
-            print(f"Download failed for {mountain} {year_batch[0]}-{year_batch[-1]}: {e}")
+            try:
+                next_batch.result()  
+                print(f"Submission completed for {mountain} - {month_numbers[month_number]} {year_batch[0]}-{year_batch[-1]}.")
+            except Exception as e:
+                print(f"Submission failed for {mountain} - {month_numbers[month_number]} {year_batch[0]}-{year_batch[-1]}: {e}")
 
-total_size_mb = total_size / (1024 * 1024)
-total_size_gb = total_size_mb / 1024
-print("All downloads completed successfully! Total file size; {total_size_gb:.2f} GB")
+request_mountain_data("Everest")
