@@ -1,8 +1,12 @@
-import xarray as xr
+import pygrib
+from pathlib import Path
 
-grib_file = "data/era5_data/January/Himalayas_January_1982_2024.grib"
+era5_data_path = Path("data/era5_data/Everest/Everest-2020-2024")
 
-ds = xr.open_dataset(grib_file, engine="cfgrib")
+# Open the GRIB file using pygrib
+with pygrib.open(era5_data_path) as grbs:
+    for grb in grbs:
+        # Print a summary of header information for each message
+        print(grb)
 
-# Print dataset summary
-print(ds)
+

@@ -102,7 +102,11 @@ base_request = {
         "total_column_snow_water"
     ],
     "year": [], # We leave this empty since we have to customize each batch due to the API limit
-    "month": [], # We leave this empty to loop through each month_number individually
+    "month": [
+        "01", "02", "03",
+        "04", "05", "06",
+        "07", "08", "09",
+        "10", "11", "12"], 
     "day": [
         "01", "02", "03",
         "04", "05", "06",
@@ -145,72 +149,58 @@ era5_dataset = "reanalysis-era5-single-levels"
 era5_data_path = Path('data/era5_data')
 era5_data_path.mkdir(parents=True, exist_ok=True)
 
-first_batch = [year for year in range(1940, 1982)]
-second_batch = [year for year in range(1982, 2025)]
+# Here we create the 5-year batches for the data
+year_batches = []
+current_end = 2024
+while current_end >= 1940:
+    current_start = max(1940, current_end - 4)
+    batch = list(range(current_start, current_end + 1))
+    year_batches.append(batch)
+    current_end = current_start - 1
 
-month_numbers = {
-    "01": "January",
-    "02": "February",
-    "03": "March",
-    "04": "April",
-    "05": "May",
-    "06": "June",
-    "07": "July",
-    "08": "August",
-    "09": "September",
-    "10": "October",
-    "11": "November",
-    "12": "December",
-}
-
-def submit_request(mountain, month_number, year_batch):
+def submit_request(mountain, year_batch):
     """
-    Submits a data request to the ERA5 API without waiting for download since each requests takes hours to process. 
+    For a given mountain and a 5-year batch, checks if the file exists.
+    If not, submits a data request to the ERA5 API.
+    The file is saved as {mountain}-{start_year}-{end_year}.zip.
     """
-
-    month_name = month_numbers[month_number]
     start_year, end_year = year_batch[0], year_batch[-1]
-    request = base_request.copy()
-    request["year"] = year_batch
-    request["month"] = [month_number]
-    request["area"] = mountain_areas[mountain]
-
-    print(f"Submitting request for {mountain} - {month_name} {start_year}-{end_year}...")
-
-    try:
-        client.retrieve(era5_dataset, request) 
-        print(f"Request submitted for {mountain} - {month_name} {start_year}-{end_year}")
-
-    except Exception as e:
-        print(f"Error submitting request for {mountain} - {month_name} {start_year}-{end_year}: {e}")
-
-
-def request_mountain_data (mountain):
-    """
-    Submits 24 requests (12 months x 2 year batches) for a given mountain to not overload the API.
-    """
-
     mountain_folder = era5_data_path / mountain
     mountain_folder.mkdir(parents=True, exist_ok=True)
+    output_file = mountain_folder / f"{mountain}-{start_year}-{end_year}.zip"
+    
+    if output_file.exists():
+        print(f"File {output_file} already exists. Skipping request for {mountain} {start_year}-{end_year}.")
+        return
 
-    for month_number, month_name in month_numbers.items():
-        (mountain_folder / month_name).mkdir(parents=True, exist_ok=True)
+    request = base_request.copy()
+    request["year"] = [str(y) for y in year_batch]
+    request["area"] = mountain_areas[mountain]
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=12) as executor:
-        future_requests = {}
+    print(f"Submitting request for {mountain} for years {start_year}-{end_year}...")
+    try:
+        client.retrieve(era5_dataset, request, str(output_file))
+        print(f"Request submitted for {mountain} for years {start_year}-{end_year}.")
+    except Exception as e:
+        print(f"Error submitting request for {mountain} for years {start_year}-{end_year}: {e}")
 
-        for month_number in month_numbers.keys():
-            for year_batch in [first_batch, second_batch]:
-                next_batch = executor.submit(submit_request, mountain, month_number, year_batch)
-                future_requests[next_batch] = (mountain, month_number, year_batch)
-
-        for next_batch in concurrent.futures.as_completed(future_requests):
-            mountain, month_number, year_batch = future_requests[next_batch]
-
+def request_mountain_data(mountain):
+    """
+    Submits 17 concurrent requests (one for each 5-year batch from 2024 to 1940)
+    for the given mountain.
+    """
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        future_requests = {
+            executor.submit(submit_request, mountain, year_batch): year_batch
+            for year_batch in year_batches
+        }
+        for future in concurrent.futures.as_completed(future_requests):
+            year_batch = future_requests[future]
+            start_year, end_year = year_batch[0], year_batch[-1]
             try:
-                next_batch.result()  
-                print(f"Submission completed for {mountain} - {month_numbers[month_number]} {year_batch[0]}-{year_batch[-1]}.")
+                future.result()
+                print(f"Submission completed for {mountain} for years {start_year}-{end_year}.")
             except Exception as e:
-                print(f"Submission failed for {mountain} - {month_numbers[month_number]} {year_batch[0]}-{year_batch[-1]}: {e}")
+                print(f"Submission failed for {mountain} for years {start_year}-{end_year}: {e}")
 
 request_mountain_data("Everest")
