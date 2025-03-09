@@ -167,7 +167,7 @@ def submit_request(mountain, year_batch):
     start_year, end_year = year_batch[0], year_batch[-1]
     mountain_folder = era5_data_path / mountain
     mountain_folder.mkdir(parents=True, exist_ok=True)
-    output_file = mountain_folder / f"{mountain}-{start_year}-{end_year}.zip"
+    output_file = mountain_folder / f"{mountain}-{start_year}-{end_year}"
     
     if output_file.exists():
         print(f"File {output_file} already exists. Skipping request for {mountain} {start_year}-{end_year}.")
@@ -186,10 +186,10 @@ def submit_request(mountain, year_batch):
 
 def request_mountain_data(mountain):
     """
-    Submits 17 concurrent requests (one for each 5-year batch from 2024 to 1940)
+    Submits a given number of concurrent requests (one for each 5-year batch from 2024 to 1940)
     for the given mountain.
     """
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=17) as executor:
         future_requests = {
             executor.submit(submit_request, mountain, year_batch): year_batch
             for year_batch in year_batches
@@ -203,4 +203,4 @@ def request_mountain_data(mountain):
             except Exception as e:
                 print(f"Submission failed for {mountain} for years {start_year}-{end_year}: {e}")
 
-request_mountain_data("Everest")
+request_mountain_data("Makalu")
