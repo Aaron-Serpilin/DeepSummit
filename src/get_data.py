@@ -165,10 +165,12 @@ def submit_request(mountain, year_batch):
     The file is saved as {mountain}-{start_year}-{end_year}.zip.
     """
     start_year, end_year = year_batch[0], year_batch[-1]
+    tokenized_mountain = mountain.replace(" ", "-")
     mountain_folder = era5_data_path / mountain
     mountain_folder.mkdir(parents=True, exist_ok=True)
-    tokenized_mountain = mountain.replace(" ", "-")
+    print(f"The tokenized mountain is {tokenized_mountain}")
     output_file = mountain_folder / f"{tokenized_mountain}-{start_year}-{end_year}"
+    print(f"The output file is {output_file}")
     
     if output_file.exists():
         print(f"File {output_file} already exists. Skipping request for {mountain} {start_year}-{end_year}.")
@@ -181,7 +183,7 @@ def submit_request(mountain, year_batch):
     print(f"Submitting request for {mountain} for years {start_year}-{end_year}...")
     try:
         client.retrieve(era5_dataset, request, str(output_file))
-        print(f"Request submitted for {mountain} for years {start_year}-{end_year}.")
+        # print(f"Request submitted for {mountain} for years {start_year}-{end_year}.")
     except Exception as e:
         print(f"Error submitting request for {mountain} for years {start_year}-{end_year}: {e}")
 
@@ -200,8 +202,8 @@ def request_mountain_data(mountain):
             start_year, end_year = year_batch[0], year_batch[-1]
             try:
                 future.result()
-                print(f"Submission completed for {mountain} for years {start_year}-{end_year}.")
+                # print(f"Submission completed for {mountain} for years {start_year}-{end_year}.")
             except Exception as e:
                 print(f"Submission failed for {mountain} for years {start_year}-{end_year}: {e}")
 
-request_mountain_data("Annapurna I")
+request_mountain_data("Kangchenjunga")
