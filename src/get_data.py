@@ -3,39 +3,6 @@ import geopandas as gpd
 import pathlib
 from pathlib import Path
 
-##### The following code is for the extraction of data from the Himalayan Database
-# Documentation to run the Himalayan Database on MacOS can be found here: https://www.himalayandatabase.com/crossover.html
-himalayan_data_path = Path('data/himalayas_data')
-
-himalaya_files = {
-    "exped": himalayan_data_path / "exped.DBF", # year range is 1905 - 2024
-    # "filters":  himalayan_data_path / "filters.DBF",
-    "members": himalayan_data_path / "members.DBF",
-    # "peaks":  himalayan_data_path / "peaks.DBF",
-    # "setup":  himalayan_data_path / "SETUP.DBF"
-}
-
-metadata_columns = {}
-
-def extract_metadata(file_path: Path):
-    try:
-        df = gpd.read_file(file_path) 
-        return list(df.columns)  
-    except Exception as e:
-        print(f"Error reading {file_path}: {e}")
-        return None 
-
-for name, file_path in himalaya_files.items():
-    metadata_columns[name] = extract_metadata(file_path)
-
-# Printing loop
-# for file, columns in metadata_columns.items():
-#     print(f"\nMetadata for {file}:")
-#     if columns:
-#         print(columns)
-#     else:
-#         print("Could not read columns.")
-
 ##### The following code is for the extraction of data from the EU's Copernicus Climate Data Store "ERA5 hourly data on single levels from 1940 to present" dataset
 import cdsapi
 import os
