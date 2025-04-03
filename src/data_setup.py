@@ -31,24 +31,14 @@ filtered_himalaya_dataframes = {
     if key in relevant_dataframe_columns
 }
 
-# Given the weather dataset, we are interested in the 8K peaks. Hence, we will filter our data based on them.
-eight_k_peak_ids = ['ANN1', 'CHOY', 'DHA1', 'EVER', 'KANG', 'LHOT', 'MAKA', 'MANA']
-
-# The Himalayan database only has information on the Nepalese Himalayas. Hence, we will use subpeak as well to have a more thorough dataset
-subpeak_ids = ['ANNM', 'ANNE', 'KANC', 'KANS', 'LSHR', 'YALU', 'YALW' 'LHOM']
+eight_k_peak_ids = ['ANN1', 'CHOY', 'DHA1', 'EVER', 'KANG', 'LHOT', 'MAKA', 'MANA'] # Given the weather dataset, we are interested in the 8K peaks. Hence, we will filter our data based on them
+subpeak_ids = ['ANNM', 'ANNE', 'KANC', 'KANS', 'LSHR', 'YALU', 'YALW', 'LHOM'] # The Himalayan database only has information on the Nepalese Himalayas. Hence, we will use subpeaks as well to have a more thorough dataset
+relevant_ids = set(eight_k_peak_ids + subpeak_ids)
 
 # To display more rows, place the number of rows inside the head method
-print(f"[INFO]\nEXPED HEAD: {filtered_himalaya_dataframes['exped'].head()}\nMEMBERS HEAD: {filtered_himalaya_dataframes['members'].head()}\nPEAKS HEAD: {filtered_himalaya_dataframes['peaks'].head()}\n")
+# print(f"[INFO]\nEXPED HEAD: {filtered_himalaya_dataframes['exped'].head()}\nMEMBERS HEAD: {filtered_himalaya_dataframes['members'].head()}\nPEAKS HEAD: {filtered_himalaya_dataframes['peaks'].head()}\n")
 
-eight_k_ids = []
-
-peaks_df = filtered_himalaya_dataframes["peaks"]
-for index, row in peaks_df.iterrows():
-    if row["HEIGHTM"] > 8000:
-        eight_k_ids.append(row["PEAKID"])
-
-print(eight_k_ids)
-
-
-
-
+relevant_himalaya_dataframes = {
+    key: df[df['PEAKID'].isin(relevant_ids)]
+    for key, df in filtered_himalaya_dataframes.items()
+}
