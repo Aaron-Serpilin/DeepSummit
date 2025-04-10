@@ -173,4 +173,4 @@ def request_mountain_data(mountain):
             except Exception as e:
                 print(f"Submission failed for {mountain} for years {start_year}-{end_year}: {e}")
 
-request_mountain_data("Cho Oyu")
+# request_mountain_data("Cho Oyu")

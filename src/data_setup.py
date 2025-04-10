@@ -80,7 +80,8 @@ y = merged_df['Target']
 
 ### 5. Splits ###
 
-set_data_splits(X, y, himalayan_data_path, 42)
+splits_path = Path("data/himalayas_data")
+set_data_splits(X, y, splits_path, 42)
 
 # For reproducibility
 output_file = himalayan_data_path / "processed_himalaya_data.csv"

@@ -1,8 +1,7 @@
 import torch
 from torch import nn
-import pytorch_lightning as pl
 
-class TabularCNN(pl.LightningModule):
+class TabularCNN(nn.Module):
 
     def __init__(self,
                  input_dim: int,
