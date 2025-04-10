@@ -3,11 +3,11 @@ from pathlib import Path
 from dbfread import DBF
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-from helper_functions import set_seeds
+from helper_functions import set_seeds, set_data_splits
 
 # Documentation to run the Himalayan Database on MacOS can be found here: https://www.himalayandatabase.com/crossover.html
 ### 1. Loading Data ###
-himalayan_data_path = Path('data/himalayas_data')
+himalayan_data_path = Path('data/himalayas_data/database_files')
 
 himalaya_files = {
     "exped": himalayan_data_path / "exped.DBF", 
@@ -79,28 +79,8 @@ X = merged_df[feature_columns]
 y = merged_df['Target']
 
 ### 5. Splits ###
-X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.2, random_state=seed)
-X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=seed)
 
-train_dir = himalayan_data_path / "train"
-val_dir = himalayan_data_path / "val"
-test_dir = himalayan_data_path / "test"
-
-train_dir.mkdir(parents=True, exist_ok=True)
-test_dir.mkdir(parents=True, exist_ok=True)
-val_dir.mkdir(parents=True, exist_ok=True)
-
-train_set = pd.concat([X_train, y_train], axis=1)
-val_set   = pd.concat([X_val, y_val], axis=1)
-test_set  = pd.concat([X_test, y_test], axis=1)
-
-train_file = train_dir / "train.csv"
-val_file   = val_dir   / "val.csv"
-test_file  = test_dir  / "test.csv"
-
-train_set.to_csv(train_file, index=False)
-val_set.to_csv(val_file, index=False)
-test_set.to_csv(test_file, index=False)
+set_data_splits(X, y, himalayan_data_path, 42)
 
 # For reproducibility
 output_file = himalayan_data_path / "processed_himalaya_data.csv"
@@ -110,7 +90,3 @@ if output_file.exists():
 else: 
     himalayan_data_path.mkdir(parents=True, exist_ok=True)
     merged_df.to_csv(output_file, index=False)
-
-print("[INFO]\nTraining set shape:", X_train.shape)
-print("Validation set shape:", X_val.shape)
-print("Test set shape:", X_test.shape)
