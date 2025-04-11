@@ -5,7 +5,7 @@ from pathlib import Path
 
 class TabularDataset(Dataset):
 
-    def _init__(self,
+    def __init__(self,
                 csv_file,
                 target_column,
                 transform=None):
@@ -21,7 +21,7 @@ class TabularDataset(Dataset):
     
     def __getitem__ (self, idx):
         x = self.features.iloc[idx].values.astype('float32')
-        y = self.targets.iloc[idx]
+        y = self.target.iloc[idx]
 
         if self.transform:
             x = self.transform(x)
@@ -30,4 +30,3 @@ class TabularDataset(Dataset):
         y = torch.tensor(y)
         return x, y
     
-        
