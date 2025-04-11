@@ -4,6 +4,9 @@ import torch.nn.functional as F
 import numpy as np
 from einops import rearrange
 
+from tab_block import MLP, simple_MLP
+from tab_model import Transformer, RowColTransformer
+
 class GEGLU (nn.Module):
 
     def forward(self, x):
@@ -57,3 +60,120 @@ class Attention (nn.Module):
         out = einsum('b h i j, b h j d -> b h i d', attn, v)
         out = rearrange(out, 'b h n d -> b n (h d)', h = h)
         return self.to_out(out)
+    
+class TabAttention(nn.Module):
+    def __init__(
+        self,
+        *,
+        categories,
+        num_continuous,
+        dim,
+        depth,
+        heads,
+        dim_head = 16,
+        dim_out = 1,
+        mlp_hidden_mults = (4, 2),
+        mlp_act = None,
+        num_special_tokens = 1,
+        continuous_mean_std = None,
+        attn_dropout = 0.,
+        ff_dropout = 0.,
+        lastmlp_dropout = 0.,
+        cont_embeddings = 'MLP',
+        scalingfactor = 10,
+        attentiontype = 'col'
+    ):
+        super().__init__()
+        assert all(map(lambda n: n > 0, categories)), 'number of each category must be positive'
+
+        # Categories related calculations
+        self.num_categories = len(categories)
+        self.num_unique_categories = sum(categories)
+
+        # Create category embeddings table
+        self.num_special_tokens = num_special_tokens
+        self.total_tokens = self.num_unique_categories + num_special_tokens
+
+        # for automatically offsetting unique category ids to the correct position in the categories embedding table
+        categories_offset = F.pad(torch.tensor(list(categories)), (1, 0), value = num_special_tokens)
+        categories_offset = categories_offset.cumsum(dim = -1)[:-1]
+        
+        self.register_buffer('categories_offset', categories_offset)
+
+        self.norm = nn.LayerNorm(num_continuous)
+        self.num_continuous = num_continuous
+        self.dim = dim
+        self.cont_embeddings = cont_embeddings
+        self.attentiontype = attentiontype
+
+        if self.cont_embeddings == 'MLP':
+            self.simple_MLP = nn.ModuleList([simple_MLP([1,100,self.dim]) for _ in range(self.num_continuous)])
+            input_size = (dim * self.num_categories)  + (dim * num_continuous)
+            nfeats = self.num_categories + num_continuous
+        else:
+            print('Continuos features are not passed through attention')
+            input_size = (dim * self.num_categories) + num_continuous
+            nfeats = self.num_categories 
+
+        # Transformer
+        if attentiontype == 'col':
+            self.transformer = Transformer(
+                num_tokens = self.total_tokens,
+                dim = dim,
+                depth = depth,
+                heads = heads,
+                dim_head = dim_head,
+                attn_dropout = attn_dropout,
+                ff_dropout = ff_dropout
+            )
+        elif attentiontype in ['row','colrow'] :
+            self.transformer = RowColTransformer(
+                num_tokens = self.total_tokens,
+                dim = dim,
+                nfeats= nfeats,
+                depth = depth,
+                heads = heads,
+                dim_head = dim_head,
+                attn_dropout = attn_dropout,
+                ff_dropout = ff_dropout,
+                style = attentiontype
+            )
+
+        l = input_size // 8
+        hidden_dimensions = list(map(lambda t: l * t, mlp_hidden_mults))
+        all_dimensions = [input_size, *hidden_dimensions, dim_out]
+        
+        self.mlp = MLP(all_dimensions, act = mlp_act)
+        self.embeds = nn.Embedding(self.total_tokens, self.dim) #.to(device)
+
+        cat_mask_offset = F.pad(torch.Tensor(self.num_categories).fill_(2).type(torch.int8), (1, 0), value = 0) 
+        cat_mask_offset = cat_mask_offset.cumsum(dim = -1)[:-1]
+
+        con_mask_offset = F.pad(torch.Tensor(self.num_continuous).fill_(2).type(torch.int8), (1, 0), value = 0) 
+        con_mask_offset = con_mask_offset.cumsum(dim = -1)[:-1]
+
+        self.register_buffer('cat_mask_offset', cat_mask_offset)
+        self.register_buffer('con_mask_offset', con_mask_offset)
+
+        self.mask_embeds_cat = nn.Embedding(self.num_categories*2, self.dim)
+        self.mask_embeds_cont = nn.Embedding(self.num_continuous*2, self.dim)
+
+    def forward(self, x_categ, x_cont,x_categ_enc,x_cont_enc):
+        device = x_categ.device
+        if self.attentiontype == 'justmlp':
+            if x_categ.shape[-1] > 0:
+                flat_categ = x_categ.flatten(1).to(device)
+                x = torch.cat((flat_categ, x_cont.flatten(1).to(device)), dim = -1)
+            else:
+                x = x_cont.clone()
+        else:
+            if self.cont_embeddings == 'MLP':
+                x = self.transformer(x_categ_enc,x_cont_enc.to(device))
+            else:
+                if x_categ.shape[-1] <= 0:
+                    x = x_cont.clone()
+                else: 
+                    flat_categ = self.transformer(x_categ_enc).flatten(1)
+                    x = torch.cat((flat_categ, x_cont), dim = -1)                    
+        flat_x = x.flatten(1)
+        return self.mlp(flat_x)
