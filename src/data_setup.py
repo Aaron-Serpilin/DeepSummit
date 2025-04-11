@@ -2,7 +2,6 @@ import pandas as pd
 from pathlib import Path
 from dbfread import DBF
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
 from helper_functions import set_seeds, set_data_splits
 
 # Documentation to run the Himalayan Database on MacOS can be found here: https://www.himalayandatabase.com/crossover.html
@@ -60,6 +59,10 @@ merged_df = merged_df.drop(columns='MSUCCESS') # after the mapping we no longer 
 
 ### 3. Processing different feature datatypes ###
 
+# When analyzing the dataset, 1104 instances lack SMTDATE, out of which 1100 are unsuccessful attempts. Hence, it is a strong indicator of summit failure.
+# # These rows will be dropped since there is no way to impute their year, nor date, only the season. Given their class imbalance, their incomplete inclusion might provide unnecessary noise. 
+merged_df = merged_df.dropna(subset=['SMTDATE'])
+
 categorical_columns = ['SEX', 'CITIZEN', 'STATUS', 'MO2USED', 'MROUTE1', 'SEASON', 'O2USED']
 numerical_columns = ['CALCAGE', 'HEIGHTM', 'MDEATHS', 'HDEATHS', 'SMTMEMBERS', 'SMTHIRED']
 
@@ -84,7 +87,7 @@ splits_path = Path("data/himalayas_data")
 set_data_splits(X, y, splits_path, 42)
 
 # For reproducibility
-output_file = himalayan_data_path / "processed_himalaya_data.csv"
+output_file = splits_path / "processed_himalaya_data.csv"
 
 if output_file.exists():
     print("[INFO] Himalaya Data has already been processed")
