@@ -34,6 +34,10 @@ class PreNorm (nn.Module):
     def forward (self, x, **kwargs):
         return self.fn(self.norm(x), **kwargs)
 
-### Model ###
+### Transformer ###
+
+# The following transformer class corresponds to equations 1 and 2 that tackle intrasample relationships
+
+# The following transformer class corresponds to equations 3 and 4 that tackle intersample relationships
 
 
