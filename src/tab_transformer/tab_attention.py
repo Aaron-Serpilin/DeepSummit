@@ -1,6 +1,5 @@
 import torch
 from torch import nn, einsum
-from torch.nn import Module, ModuleList
 import torch.nn.functional as F
 import numpy as np
 from einops import rearrange
@@ -13,7 +12,10 @@ class GEGLU (nn.Module):
 
 class FeedForward (nn.Module):
 
-    def __init__ (self, dim, mult = 4, dropout = 0.):
+    def __init__ (self, 
+                  dim:int, 
+                  mult:int = 4, 
+                  dropout:float = 0.):
         super().__init__()
 
         self.net = nn.Sequential(
@@ -29,10 +31,10 @@ class FeedForward (nn.Module):
 class Attention (nn.Module):
 
     def __init__(self,
-                 dim,
-                 heads = 8,
-                 dim_head = 16,
-                 dropout = 0.
+                 dim:int,
+                 heads:int = 8,
+                 dim_head:int = 16,
+                 dropout:float = 0.
     ):
         
         super().__init__()
