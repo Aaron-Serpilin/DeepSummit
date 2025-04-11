@@ -2,11 +2,6 @@ import torch
 from torch import nn, einsum
 import torch.nn.functional as F
 
-WEIGHT_DECAY = 0.1
-BATCH_SIZE = 32 # 256 is the original but due to hardware limitations we will lower it
-LR = 0.0001
-DROPOUT = 0.1
-
 ### Helpers ###
 
 def exists(val):
@@ -14,6 +9,30 @@ def exists(val):
 
 def default(val, d):
     return val if exists(val) else d
+
+### Classes ###
+
+# Abstracts all the ski/residual connections into a single class
+class Residual (nn.Module):
+
+    def __init__(self, fn):
+
+        super().__init__()
+        self.fn = fn
+
+    def forward (self, x, **kwargs):
+        return self.fn(x, **kwargs) + x
+    
+class PreNorm (nn.Module):
+
+    def __init__(self, dim, fn):
+
+        super().__init__()
+        self.norm = nn.LayerNorm(dim)
+        self.fn = fn
+
+    def forward (self, x, **kwargs):
+        return self.fn(self.norm(x), **kwargs)
 
 ### Model ###
 
