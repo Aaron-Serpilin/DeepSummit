@@ -21,7 +21,7 @@ from torchvision import datasets, transforms
 from sklearn.model_selection import train_test_split
 
 # Imports from project directories
-from .tab_transformer.tab_utils import TabularDataset
+from tab_transformer.tab_utils import TabularDataset
 
 
 ### Randomization ###
@@ -94,6 +94,7 @@ def create_dataloaders (train_file: str,
     It returns a tuple of (train_dataloader, val_dataloader, test_dataloader). 
     """
 
+    # data_prep_openml, DataSetCatCon
     target_column = "Target"
 
     train_data = TabularDataset(csv_file=train_file, target_column=target_column, transform=transform)

@@ -3,6 +3,7 @@ from pathlib import Path
 from dbfread import DBF
 from sklearn.preprocessing import StandardScaler
 from helper_functions import set_seeds, set_data_splits
+from tab_transformer.tab_utils import TabularDataset
 
 # Documentation to run the Himalayan Database on MacOS can be found here: https://www.himalayandatabase.com/crossover.html
 ### 1. Loading Data ###
@@ -62,22 +63,26 @@ merged_df = merged_df.drop(columns='MSUCCESS') # after the mapping we no longer 
 # When analyzing the dataset, 1104 instances lack SMTDATE, out of which 1100 are unsuccessful attempts. Hence, it is a strong indicator of summit failure.
 # # These rows will be dropped since there is no way to impute their year, nor date, only the season. Given their class imbalance, their incomplete inclusion might provide unnecessary noise. 
 merged_df = merged_df.dropna(subset=['SMTDATE'])
-
 categorical_columns = ['SEX', 'CITIZEN', 'STATUS', 'MO2USED', 'MROUTE1', 'SEASON', 'O2USED']
-numerical_columns = ['CALCAGE', 'HEIGHTM', 'MDEATHS', 'HDEATHS', 'SMTMEMBERS', 'SMTHIRED']
+continuous_columns = ['CALCAGE', 'HEIGHTM', 'MDEATHS', 'HDEATHS', 'SMTMEMBERS', 'SMTHIRED']
 
+# tabular_dataset = TabularDataset()
+
+# For now leaving this to the TabularDataset class
 # Label encoding
-for col in categorical_columns:
-    merged_df[col] = merged_df[col].astype('category').cat.codes
+# for col in categorical_columns:
+#     merged_df[col] = merged_df[col].astype('category').cat.codes
 
 # Normalizing [(value - mean) / std]
-scaler = StandardScaler()
-merged_df[numerical_columns] = scaler.fit_transform(merged_df[numerical_columns])
+# print(f"Before: {merged_df['CALCAGE']}\n")
+# scaler = StandardScaler()
+# merged_df[continuous_columns] = scaler.fit_transform(merged_df[continuous_columns])
+# print(f"Before: {merged_df['CALCAGE']}\n")
 
 ### 4. Feature Matrix and Target Vector ###
 seed = 42
 set_seeds(seed)
-feature_columns = categorical_columns + numerical_columns
+feature_columns = categorical_columns + continuous_columns
 X = merged_df[feature_columns]
 y = merged_df['Target']
 
