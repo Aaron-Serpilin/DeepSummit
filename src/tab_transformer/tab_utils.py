@@ -25,7 +25,7 @@ class TabularDataset(Dataset):
             target_column: Name of the target column
             cat_cols: List of column indices or names of categorical features
             task: Type of problem, either classification or regression
-            continuous_mean_std: List of (mean, std) tuples for each continuous feature. If provided, continuous features are normalized.
+            continuous_mean_std: List of (mean, std) tuples for each continuous feature. If provided, continuous features are normalized
         """
         
         self.data = pd.read_csv(csv_file)
@@ -70,7 +70,7 @@ class TabularDataset(Dataset):
             self.X2 = (self.X2 - means) / stds
 
     def __len__ (self):
-        return len(self.data)
+        return len(self.y)
     
     def __getitem__ (self, idx):
 
@@ -78,11 +78,31 @@ class TabularDataset(Dataset):
         Returns:
             A tuple containing:
                 1) The concatenated categorical tensor with the CLS token as a tensor of shape (n_cat+1,)
-                2) The continuous features as a tensor.
-                3) The target value as a tensor.
-                4) The concatenated categorical mask (with CLS token mask) as a tensor.
-                5) The continuous mask as a tensor.
+                2) The continuous features as a tensor
+                3) The target value as a tensor
+                4) The concatenated categorical mask (with CLS token mask) as a tensor
+                5) The continuous mask as a tensor
         """
+
+        cat_instance = self.X1[idx]         # shape: (n_cat,)
+        con_instance = self.X2[idx]           # shape: (n_cont,)
+        target_instance = self.y[idx]
+        
+        cat_mask_instance = self.X1_mask[idx]
+        con_mask_instance = self.X2_mask[idx]
+        
+        # Concatenate CLS token to categorical features and its mask (only append to categorical and not continuous since its appended once per instance)
+        cat_instance_with_cls = np.concatenate((self.cls[idx], cat_instance))  # shape: (n_cat + 1,)
+        cat_mask_with_cls = np.concatenate((self.cls_mask[idx], cat_mask_instance))  # shape: (n_cat + 1,)
+        
+        # Convert arrays to torch tensors
+        cat_tensor = torch.tensor(cat_instance_with_cls, dtype=torch.long)
+        con_tensor = torch.tensor(con_instance, dtype=torch.float)
+        target_tensor = torch.tensor(target_instance)
+        cat_mask_tensor = torch.tensor(cat_mask_with_cls, dtype=torch.long)
+        con_mask_tensor = torch.tensor(con_mask_instance, dtype=torch.long)
+        
+        return cat_tensor, con_tensor, target_tensor, cat_mask_tensor, con_mask_tensor
     
 ### Everything underneath is for testing, will be cleaned
     
@@ -101,4 +121,12 @@ experiment_set = TabularDataset(himalayan_train_file,
                           'clf',
                           continuous_mean_std)
 
-    
+experiment = experiment_set[0]
+print(f"Experiment: {experiment}\n")
+print(f"Categorical Tensor (with CLS): {experiment[0]}\nShape: {experiment[0].shape}\n")
+print(f"Continuous Tensor: {experiment[1]}\nShape: {experiment[1].shape}\n")
+print(f"Target Tensor: {experiment[2]}\nShape: {experiment[2].shape}\n")
+print(f"Categorical mask: {experiment[3]}\nShape: {experiment[3].shape}\n")
+print(f"Continuous mask: {experiment[4]}\nShape: {experiment[4].shape}\n")
+
+
