@@ -77,53 +77,54 @@ def set_data_splits (X, y, base_dir: Path, seed:int=42):
     print(f"[INFO] Validation set saved to: {val_file}")
     print(f"[INFO] Test set saved to: {test_file}")
 
-def create_dataloaders (train_file: str, 
-    val_file: str, 
-    test_file: str, 
-    transform: transforms.Compose, 
-    batch_size: int=32, 
-    num_workers: int=os.cpu_count() 
-):
+### Update after fixing Tabular Dataset
+
+# def create_dataloaders (train_file: str, 
+#     val_file: str, 
+#     test_file: str, 
+#     transform: transforms.Compose, 
+#     batch_size: int=32, 
+#     num_workers: int=os.cpu_count() 
+# ):
     
-    """
-    Creates the training and testing DataLoaders.
+#     """
+#     Creates the training and testing DataLoaders.
 
-    It takes in a training, validation, and testing file and turns them 
-    into PyTorch Datasets and then into PyTorch DataLoaders.
+#     It takes in a training, validation, and testing file and turns them 
+#     into PyTorch Datasets and then into PyTorch DataLoaders.
 
-    It returns a tuple of (train_dataloader, val_dataloader, test_dataloader). 
-    """
+#     It returns a tuple of (train_dataloader, val_dataloader, test_dataloader). 
+#     """
 
-    # data_prep_openml, DataSetCatCon
-    target_column = "Target"
+#     target_column = "Target"
 
-    train_data = TabularDataset(csv_file=train_file, target_column=target_column, transform=transform)
-    val_data = TabularDataset(csv_file=val_file, target_column=target_column, transform=transform)
-    test_data = TabularDataset(csv_file=test_file, target_column=target_column, transform=transform)
+#     train_data = TabularDataset(csv_file=train_file, target_column=target_column, transform=transform)
+#     val_data = TabularDataset(csv_file=val_file, target_column=target_column, transform=transform)
+#     test_data = TabularDataset(csv_file=test_file, target_column=target_column, transform=transform)
     
 
-    train_dataloader = DataLoader(
-      train_data, 
-      batch_size=batch_size,
-      shuffle=True,
-      num_workers=num_workers,
-      pin_memory=True
-    )
+#     train_dataloader = DataLoader(
+#       train_data, 
+#       batch_size=batch_size,
+#       shuffle=True,
+#       num_workers=num_workers,
+#       pin_memory=True
+#     )
     
-    val_dataloader = DataLoader(
-        val_data, 
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=num_workers,
-        pin_memory=True
-    )
+#     val_dataloader = DataLoader(
+#         val_data, 
+#         batch_size=batch_size,
+#         shuffle=False,
+#         num_workers=num_workers,
+#         pin_memory=True
+#     )
 
-    test_dataloader = DataLoader(
-        test_data,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=num_workers,
-        pin_memory=True
-    )
+#     test_dataloader = DataLoader(
+#         test_data,
+#         batch_size=batch_size,
+#         shuffle=False,
+#         num_workers=num_workers,
+#         pin_memory=True
+#     )
 
-    return (train_dataloader, val_dataloader, test_dataloader)
+#     return (train_dataloader, val_dataloader, test_dataloader)

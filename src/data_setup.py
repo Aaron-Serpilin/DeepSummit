@@ -66,19 +66,6 @@ merged_df = merged_df.dropna(subset=['SMTDATE'])
 categorical_columns = ['SEX', 'CITIZEN', 'STATUS', 'MO2USED', 'MROUTE1', 'SEASON', 'O2USED']
 continuous_columns = ['CALCAGE', 'HEIGHTM', 'MDEATHS', 'HDEATHS', 'SMTMEMBERS', 'SMTHIRED']
 
-# tabular_dataset = TabularDataset()
-
-# For now leaving this to the TabularDataset class
-# Label encoding
-# for col in categorical_columns:
-#     merged_df[col] = merged_df[col].astype('category').cat.codes
-
-# Normalizing [(value - mean) / std]
-# print(f"Before: {merged_df['CALCAGE']}\n")
-# scaler = StandardScaler()
-# merged_df[continuous_columns] = scaler.fit_transform(merged_df[continuous_columns])
-# print(f"Before: {merged_df['CALCAGE']}\n")
-
 ### 4. Feature Matrix and Target Vector ###
 seed = 42
 set_seeds(seed)
@@ -99,3 +86,31 @@ if output_file.exists():
 else: 
     himalayan_data_path.mkdir(parents=True, exist_ok=True)
     merged_df.to_csv(output_file, index=False)
+
+### 6. Creating the Tabular Dataset structure ###
+
+himalayan_train_file = Path("data/himalayas_data/train/train.csv")
+himalayan_val_file = Path("data/himalayas_data/val/val.csv")
+himalayan_test_file = Path("data/himalayas_data/test/test.csv")
+
+# continuous_means = [merged_df[col].mean() for col in continuous_columns]
+# continuous_stds = [merged_df[col].std() for col in continuous_columns]
+# continuous_mean_std = list(zip(continuous_means, continuous_stds))
+
+# train_tab_dataset = TabularDataset(himalayan_train_file,
+#                           'Target',
+#                           categorical_columns,
+#                           'clf',
+#                           continuous_mean_std)
+
+# val_tab_dataset = TabularDataset(himalayan_val_file,
+#                           'Target',
+#                           categorical_columns,
+#                           'clf',
+#                           continuous_mean_std)
+
+# test_tab_dataset = TabularDataset(himalayan_test_file,
+#                           'Target',
+#                           categorical_columns,
+#                           'clf',
+#                           continuous_mean_std)
