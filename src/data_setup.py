@@ -2,11 +2,14 @@ import pandas as pd
 from pathlib import Path
 from dbfread import DBF
 from sklearn.preprocessing import StandardScaler
-from helper_functions import set_seeds, set_data_splits
+from helper_functions import set_seeds, set_data_splits, create_dataloaders
 from tab_transformer.tab_utils import TabularDataset
+import os
 
 # Documentation to run the Himalayan Database on MacOS can be found here: https://www.himalayandatabase.com/crossover.html
+
 ### 1. Loading Data ###
+
 himalayan_data_path = Path('data/himalayas_data/database_files')
 
 himalaya_files = {
@@ -62,11 +65,13 @@ merged_df = merged_df.drop(columns='MSUCCESS') # after the mapping we no longer 
 
 # When analyzing the dataset, 1104 instances lack SMTDATE, out of which 1100 are unsuccessful attempts. Hence, it is a strong indicator of summit failure.
 # # These rows will be dropped since there is no way to impute their year, nor date, only the season. Given their class imbalance, their incomplete inclusion might provide unnecessary noise. 
+
 merged_df = merged_df.dropna(subset=['SMTDATE'])
 categorical_columns = ['SEX', 'CITIZEN', 'STATUS', 'MO2USED', 'MROUTE1', 'SEASON', 'O2USED']
 continuous_columns = ['CALCAGE', 'HEIGHTM', 'MDEATHS', 'HDEATHS', 'SMTMEMBERS', 'SMTHIRED']
 
 ### 4. Feature Matrix and Target Vector ###
+
 seed = 42
 set_seeds(seed)
 feature_columns = categorical_columns + continuous_columns
@@ -93,24 +98,17 @@ himalayan_train_file = Path("data/himalayas_data/train/train.csv")
 himalayan_val_file = Path("data/himalayas_data/val/val.csv")
 himalayan_test_file = Path("data/himalayas_data/test/test.csv")
 
-# continuous_means = [merged_df[col].mean() for col in continuous_columns]
-# continuous_stds = [merged_df[col].std() for col in continuous_columns]
-# continuous_mean_std = list(zip(continuous_means, continuous_stds))
+continuous_means = [merged_df[col].mean() for col in continuous_columns]
+continuous_stds = [merged_df[col].std() for col in continuous_columns]
+continuous_mean_std = list(zip(continuous_means, continuous_stds))
 
-# train_tab_dataset = TabularDataset(himalayan_train_file,
-#                           'Target',
-#                           categorical_columns,
-#                           'clf',
-#                           continuous_mean_std)
-
-# val_tab_dataset = TabularDataset(himalayan_val_file,
-#                           'Target',
-#                           categorical_columns,
-#                           'clf',
-#                           continuous_mean_std)
-
-# test_tab_dataset = TabularDataset(himalayan_test_file,
-#                           'Target',
-#                           categorical_columns,
-#                           'clf',
-#                           continuous_mean_std)
+train_dataloader, val_dataloader, test_dataloader = create_dataloaders(
+    train_file=himalayan_train_file,
+    val_file=himalayan_val_file,
+    test_file=himalayan_test_file,
+    cat_cols=categorical_columns,
+    continuous_mean_std=continuous_mean_std,
+    target_column='Target',
+    batch_size=32,
+    num_workers=os.cpu_count()
+)

@@ -8,11 +8,12 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import requests
+from typing import Type, List, Tuple
 
 # PyTorch Imports
 import torch
 from torch import nn
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 
 # Torchvision (for image datasets and transforms)
 from torchvision import datasets, transforms
@@ -22,7 +23,6 @@ from sklearn.model_selection import train_test_split
 
 # Imports from project directories
 from tab_transformer.tab_utils import TabularDataset
-
 
 ### Randomization ###
 
@@ -38,7 +38,10 @@ def set_seeds(seed: int=42):
 
 ### Data Preparation ###
 
-def set_data_splits (X, y, base_dir: Path, seed:int=42):
+def set_data_splits (X, 
+                     y, 
+                     base_dir: Path, 
+                     seed:int=42):
     """"
     Splits the data into train (80%), validation (10%), and test (10%) sets.
     Afterwards, it saves them as CSV files in the specified directory.
@@ -77,54 +80,61 @@ def set_data_splits (X, y, base_dir: Path, seed:int=42):
     print(f"[INFO] Validation set saved to: {val_file}")
     print(f"[INFO] Test set saved to: {test_file}")
 
-### Update after fixing Tabular Dataset
-
-# def create_dataloaders (train_file: str, 
-#     val_file: str, 
-#     test_file: str, 
-#     transform: transforms.Compose, 
-#     batch_size: int=32, 
-#     num_workers: int=os.cpu_count() 
-# ):
+def create_dataloaders (train_file: Path, 
+                        val_file: Path, 
+                        test_file: Path, 
+                        cat_cols: List,
+                        continuous_mean_std: List[Tuple[float, float]],
+                        target_column: str= 'Target',
+                        batch_size: int=32, 
+                        num_workers: int=os.cpu_count()):
     
-#     """
-#     Creates the training and testing DataLoaders.
+    """
+    Creates the training, validation, and testing DataLoaders from CSV files using TabularDataset. 
 
-#     It takes in a training, validation, and testing file and turns them 
-#     into PyTorch Datasets and then into PyTorch DataLoaders.
+    It takes in a training, validation, and testing file and turns them 
+    into Tabular Datasets and then into PyTorch DataLoaders.
 
-#     It returns a tuple of (train_dataloader, val_dataloader, test_dataloader). 
-#     """
-
-#     target_column = "Target"
-
-#     train_data = TabularDataset(csv_file=train_file, target_column=target_column, transform=transform)
-#     val_data = TabularDataset(csv_file=val_file, target_column=target_column, transform=transform)
-#     test_data = TabularDataset(csv_file=test_file, target_column=target_column, transform=transform)
+    Args:
+        train_file (str): Path to the training CSV file.
+        val_file (str): Path to the validation CSV file.
+        test_file (str): Path to the testing CSV file.
+        cat_cols (list): List of categorical column names.
+        continuous_mean_std: List of (mean, std) tuples for continuous features.
+        target_column (str): Name of the target column.
+        batch_size (int): Batch size for DataLoaders.
+        num_workers (int): Number of worker processes to use for data loading.
     
+    Returns:
+        A tuple (train_dataloader, val_dataloader, test_dataloader).
+    """
 
-#     train_dataloader = DataLoader(
-#       train_data, 
-#       batch_size=batch_size,
-#       shuffle=True,
-#       num_workers=num_workers,
-#       pin_memory=True
-#     )
+    train_data = TabularDataset(csv_file=Path(train_file), target_column=target_column, cat_cols=cat_cols, task='clf', continuous_mean_std=continuous_mean_std)
+    val_data = TabularDataset(csv_file=Path(val_file), target_column=target_column, cat_cols=cat_cols, task='clf', continuous_mean_std=continuous_mean_std)
+    test_data = TabularDataset(csv_file=Path(test_file), target_column=target_column, cat_cols=cat_cols, task='clf', continuous_mean_std=continuous_mean_std)
     
-#     val_dataloader = DataLoader(
-#         val_data, 
-#         batch_size=batch_size,
-#         shuffle=False,
-#         num_workers=num_workers,
-#         pin_memory=True
-#     )
+    train_dataloader = DataLoader(
+      train_data, 
+      batch_size=batch_size,
+      shuffle=True,
+      num_workers=num_workers,
+      pin_memory=True
+    )
+    
+    val_dataloader = DataLoader(
+        val_data, 
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=True
+    )
 
-#     test_dataloader = DataLoader(
-#         test_data,
-#         batch_size=batch_size,
-#         shuffle=False,
-#         num_workers=num_workers,
-#         pin_memory=True
-#     )
+    test_dataloader = DataLoader(
+        test_data,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=True
+    )
 
-#     return (train_dataloader, val_dataloader, test_dataloader)
+    return (train_dataloader, val_dataloader, test_dataloader)

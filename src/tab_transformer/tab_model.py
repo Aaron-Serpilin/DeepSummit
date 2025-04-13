@@ -41,6 +41,7 @@ class PreNorm (nn.Module):
 # The following transformer class corresponds to equations 1 and 2 that tackle intrasample relationships
 
 class Transformer(nn.Module):
+
     def __init__(self, 
                  num_tokens, 
                  dim, 
@@ -71,6 +72,7 @@ class Transformer(nn.Module):
 # The following transformer class corresponds to equations 3 and 4 that tackle intersample relationships
 
 class RowColTransformer(nn.Module):
+    
     def __init__(self, 
                  num_tokens, 
                  dim, nfeats, 

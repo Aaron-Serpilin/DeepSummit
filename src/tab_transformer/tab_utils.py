@@ -104,29 +104,3 @@ class TabularDataset(Dataset):
         
         return cat_tensor, con_tensor, target_tensor, cat_mask_tensor, con_mask_tensor
     
-### Everything underneath is for testing, will be cleaned
-    
-himalayan_train_file = Path("data/himalayas_data/train/train.csv")
-df_file = pd.read_csv(himalayan_train_file)
-
-categorical_columns = ['SEX', 'CITIZEN', 'STATUS', 'MO2USED', 'MROUTE1', 'SEASON', 'O2USED']
-continuous_columns = ['CALCAGE', 'HEIGHTM', 'MDEATHS', 'HDEATHS', 'SMTMEMBERS', 'SMTHIRED']
-continuous_means = [df_file[col].mean() for col in continuous_columns]
-continuous_stds = [df_file[col].std() for col in continuous_columns]
-continuous_mean_std = list(zip(continuous_means, continuous_stds))
-
-experiment_set = TabularDataset(himalayan_train_file,
-                          'Target',
-                          categorical_columns,
-                          'clf',
-                          continuous_mean_std)
-
-experiment = experiment_set[0]
-print(f"Experiment: {experiment}\n")
-print(f"Categorical Tensor (with CLS): {experiment[0]}\nShape: {experiment[0].shape}\n")
-print(f"Continuous Tensor: {experiment[1]}\nShape: {experiment[1].shape}\n")
-print(f"Target Tensor: {experiment[2]}\nShape: {experiment[2].shape}\n")
-print(f"Categorical mask: {experiment[3]}\nShape: {experiment[3].shape}\n")
-print(f"Continuous mask: {experiment[4]}\nShape: {experiment[4].shape}\n")
-
-
