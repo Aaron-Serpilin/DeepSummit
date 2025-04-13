@@ -148,7 +148,7 @@ class SAINT(nn.Module):
         y_dim = 2
         ):
         super().__init__()
-        assert all(map(lambda n: n > 0, categories)), 'number of each category must be positive'
+        assert all(map(lambda n: n > 0, categories)), 'Number of each category must be positive'
 
         # Categories related calculations
 
@@ -176,13 +176,17 @@ class SAINT(nn.Module):
         self.final_mlp_style = final_mlp_style
 
         if self.cont_embeddings == 'MLP':
+
             self.simple_MLP = nn.ModuleList([simple_MLP([1,100,self.dim]) for _ in range(self.num_continuous)])
             input_size = (dim * self.num_categories)  + (dim * num_continuous)
             nfeats = self.num_categories + num_continuous
+
         elif self.cont_embeddings == 'pos_singleMLP':
+
             self.simple_MLP = nn.ModuleList([simple_MLP([1,100,self.dim]) for _ in range(1)])
             input_size = (dim * self.num_categories)  + (dim * num_continuous)
             nfeats = self.num_categories + num_continuous
+
         else:
             print('Continous features are not passed through attention')
             input_size = (dim * self.num_categories) + num_continuous
@@ -190,6 +194,7 @@ class SAINT(nn.Module):
 
         # Transformer
         if attentiontype == 'col':
+
             self.transformer = Transformer(
                 num_tokens = self.total_tokens,
                 dim = dim,
@@ -199,7 +204,9 @@ class SAINT(nn.Module):
                 attn_dropout = attn_dropout,
                 ff_dropout = ff_dropout
             )
+
         elif attentiontype in ['row','colrow'] :
+
             self.transformer = RowColTransformer(
                 num_tokens = self.total_tokens,
                 dim = dim,
@@ -241,12 +248,10 @@ class SAINT(nn.Module):
             self.mlp1 = sep_MLP(dim,self.num_categories,categories)
             self.mlp2 = sep_MLP(dim,self.num_continuous,np.ones(self.num_continuous).astype(int))
 
-
         self.mlpfory = simple_MLP([dim ,1000, y_dim])
         self.pt_mlp = simple_MLP([dim*(self.num_continuous+self.num_categories) ,6*dim*(self.num_continuous+self.num_categories)//5, dim*(self.num_continuous+self.num_categories)//2])
         self.pt_mlp2 = simple_MLP([dim*(self.num_continuous+self.num_categories) ,6*dim*(self.num_continuous+self.num_categories)//5, dim*(self.num_continuous+self.num_categories)//2])
 
-        
     def forward(self, x_categ, x_cont):
         
         x = self.transformer(x_categ, x_cont)
