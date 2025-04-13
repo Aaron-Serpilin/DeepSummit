@@ -75,9 +75,12 @@ class TabAttention(nn.Module):
         mlp_hidden_mults = (4, 2),
         mlp_act = None,
         num_special_tokens = 1,
+        continuous_mean_std = None,
         attn_dropout = 0.,
         ff_dropout = 0.,
+        lastmlp_dropout = 0.,
         cont_embeddings = 'MLP',
+        scalingfactor = 10,
         attentiontype = 'col'
     ):
         super().__init__()

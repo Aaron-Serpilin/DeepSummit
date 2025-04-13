@@ -33,7 +33,8 @@ class MLP (nn.Module):
 
 class simple_MLP(nn.Module):
 
-    def __init__(self,dims):
+    def __init__(self,
+                 dims):
 
         super(simple_MLP, self).__init__()
         self.layers = nn.Sequential(
@@ -47,4 +48,26 @@ class simple_MLP(nn.Module):
             x = x.view(x.size(0), -1)
         x = self.layers(x)
         return x
+    
+class sep_MLP(nn.Module):
+
+    def __init__(self,
+                 dim,
+                 len_feats,
+                 categories):
+        
+        super(sep_MLP, self).__init__()
+        self.len_feats = len_feats
+        self.layers = nn.ModuleList([])
+        for i in range(len_feats):
+            self.layers.append(simple_MLP([dim,5*dim, categories[i]]))
+
+        
+    def forward(self, x):
+        y_pred = list([])
+        for i in range(self.len_feats):
+            x_i = x[:,i,:]
+            pred = self.layers[i](x_i)
+            y_pred.append(pred)
+        return y_pred
 
