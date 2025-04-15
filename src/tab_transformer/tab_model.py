@@ -167,7 +167,6 @@ class SAINT(nn.Module):
         
         self.register_buffer('categories_offset', categories_offset)
 
-
         self.norm = nn.LayerNorm(num_continuous)
         self.num_continuous = num_continuous
         self.dim = dim
