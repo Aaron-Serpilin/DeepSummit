@@ -1,8 +1,14 @@
 import torch
 from torch import nn, einsum
 import torch.nn.functional as F
-from tab_attention import GEGLU
-from tab_model import default
+
+### Helpers ###
+
+def default(val, d):
+    return val if exists(val) else d
+
+def exists(val):
+    return val is not None
 
 ### Blocks ### 
 
@@ -70,4 +76,31 @@ class sep_MLP(nn.Module):
             pred = self.layers[i](x_i)
             y_pred.append(pred)
         return y_pred
+    
+class GEGLU (nn.Module):
+
+    def forward(self, x):
+        x, gates = x.chunk(2, dim = -1)
+        return x * F.gelu(gates)
+
+class Residual (nn.Module):
+
+    def __init__(self, fn):
+
+        super().__init__()
+        self.fn = fn
+
+    def forward (self, x, **kwargs):
+        return self.fn(x, **kwargs) + x
+    
+class PreNorm (nn.Module):
+
+    def __init__(self, dim, fn):
+
+        super().__init__()
+        self.norm = nn.LayerNorm(dim)
+        self.fn = fn
+
+    def forward (self, x, **kwargs):
+        return self.fn(self.norm(x), **kwargs)
 

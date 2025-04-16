@@ -1,9 +1,9 @@
 import torch
 from torch import nn
 
-from augmentations import permute_data
-from tab_model import SAINT
-from tab_utils import TabularDataset
+# from augmentations import permute_data
+from src.tab_transformer.tab_model import SAINT
+from src.tab_transformer.tab_utils import TabularDataset
 from helper_functions import set_seeds
 
 from torch.utils.data import DataLoader
@@ -35,7 +35,7 @@ def train_step(
 
     train_loss, train_acc = 0, 0
 
-    for batch, (X, y) in enumerate(dataloader):
+    for batch, data in enumerate(dataloader):
 
         X, y = X.to(device), y.to(device)
 
@@ -62,44 +62,6 @@ def train_step(
     train_loss /= len(dataloader)
     train_acc /= len(dataloader)
     return train_loss, train_acc
-
-def val_step (
-        model: torch.nn.Module,
-        dataloader: torch.utils.DataLoader,
-        loss_fn: torch.nn.Module,
-        device: torch.device
-        ) -> Tuple[float, float]:
-    
-        """ 
-        Validate a PyTorch model for a single epoch
-
-        Turns a target PyTorch model to "eval" mode and then performs a forward pass on a validation dataset
-
-        It returns a tuple of validation loss and validation accuracy metrics
-        """
-
-        model.eval()
-
-        val_loss, val_acc = 0, 0
-
-        with torch.inference_mode():
-
-            for batch, (X, y) in enumerate(dataloader):
-                X, y = X.to(device), y.to(device)
-
-                # Forward pass
-                val_pred_logits = model(X)
-
-                # Calculate and accumulate loss
-                loss = loss_fn(val_pred_logits, y)
-                val_loss = loss.item()
-
-                val_pred_labels = val_pred_logits.argmax(dim=1)
-                val_acc += ((val_pred_labels == y).sum().item()/len(val_pred_labels))
-                
-        val_loss /= len(dataloader)
-        val_acc /= len(dataloader)
-        return val_loss, val_acc
 
 def test_step(
     model: torch.nn.Module, 
@@ -142,6 +104,7 @@ def test_step(
 def train(
     model: torch.nn.Module, 
     train_dataloader: torch.utils.data.DataLoader, 
+    val_dataloader: torch.utils.data.DataLoader,
     test_dataloader: torch.utils.data.DataLoader, 
     optimizer:str, 
     loss_fn: torch.nn.Module, 
@@ -153,14 +116,14 @@ def train(
     ) -> Dict[str, List]:
 
     """ 
-    Trains and tests a PyTorch model
+    Trains, validates and tests a PyTorch model
 
-    Passes a target PyTorch model through the train_step() and test_step() functions for a number of epochs,
-    training and testing the model in the same epoch loop
+    Passes a target PyTorch model through the train_step(), val_step(), and test_step() functions for a number of epochs,
+    training, validating and testing the model in the same epoch loop
 
     It calculates, prints and stores evaluation metrics throughout
 
-    It returns a dictionary of training and testing loss as well as training and testing accuracy metrics.
+    It returns a dictionary of training, validation and testing loss as well as training, validation and testing accuracy metrics.
     Each metric has a value in a list for each epoch
     """
 
@@ -199,6 +162,13 @@ def train(
             device=device
         )
 
+        val_loss, val_acc = test_step(
+            model=model,
+            dataloader=val_dataloader, 
+            loss_fn=loss_fn,
+            device=device
+        )
+
         test_loss, test_acc = test_step(
             model=model,
             dataloader=test_dataloader,
@@ -210,6 +180,8 @@ def train(
 
         results["train_loss"].append(train_loss)
         results["train_acc"].append(train_acc)
+        results["val_loss"].append(val_loss)
+        results["val_acc"].append(val_acc)
         results["test_loss"].append(test_loss)
         results["test_acc"].append(test_acc)
 
