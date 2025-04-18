@@ -2,9 +2,14 @@ import torch
 from torch import nn, einsum
 import torch.nn.functional as F
 from einops import rearrange
+import numpy as np
 
-from src.tab_transformer.tab_attention import Transformer  
+from src.tab_transformer.tab_attention import Transformer, RowColTransformer  
 from src.tab_transformer.tab_blocks import MLP, simple_MLP, sep_MLP 
+
+# from .tab_attention import Transformer, RowColTransformer
+# from .tab_blocks    import MLP, simple_MLP, sep_MLP
+
 
 ### SAINT Model ###
 

@@ -4,6 +4,7 @@ import torch.nn.functional as F
 import numpy as np
 from einops import rearrange
 
+# from .tab_blocks import GEGLU, Residual, PreNorm
 from src.tab_transformer.tab_blocks import GEGLU, Residual, PreNorm
 
 class FeedForward (nn.Module):
@@ -170,6 +171,8 @@ class TabAttention(nn.Module):
                     x = torch.cat((flat_categ, x_cont), dim = -1)                    
         flat_x = x.flatten(1)
         return self.mlp(flat_x)
+    
+# The following transformer class corresponds to equations 1 and 2 that tackles intrasample relationships
     
 class Transformer(nn.Module):
 

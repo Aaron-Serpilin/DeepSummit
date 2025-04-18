@@ -22,7 +22,7 @@ from torchvision import datasets, transforms
 from sklearn.model_selection import train_test_split
 
 # Imports from project directories
-from tab_transformer.tab_utils import TabularDataset
+from src.tab_transformer.tab_utils import TabularDataset
 
 ### Randomization ###
 
