@@ -79,7 +79,24 @@ def embed_data_mask(x_categ:Tensor,
     """
 
     device = x_cont.device
-    x_categ = x_categ + model.categories_offset.type_as(x_categ)
+    # print(f"x_categ size is {x_categ.shape}\n")
+    # print(f"x_categ is {x_categ}")
+    # The size is (Batch Size, n_cat + 1) where the +1 is due to the prepended cls token in TabularDataset
+    # We only deal with adjusting the offset size of the categorical data since we only appended the cls token once per instance in TabularDataset
+    # x_categ = x_categ + model.categories_offset.type_as(x_categ)
+
+    offsets = model.categories_offset
+    print(f"offsets are: {offsets}\n")
+    print(f"[INFO] x_categ before: {x_categ}\nSize before: {x_categ.shape}\n")
+    
+    if offsets.size(0) == x_categ.size(1) - 1:
+        zeros = torch.zeros(1, dtype=offsets.dtype, device=x_categ.device)
+        offsets = torch.cat([zeros, offsets], dim=0)
+
+    x_categ += offsets.type_as(x_categ)
+
+    print(f"[INFO] x_categ after: {x_categ}\nSize after: {x_categ.shape}\n")
+
     x_categ_enc = model.embeds(x_categ)
     n1,n2 = x_cont.shape
     _, n3 = x_categ.shape
@@ -90,11 +107,21 @@ def embed_data_mask(x_categ:Tensor,
     else:
         raise Exception('This case should not work!')    
 
-
-    x_cont_enc = x_cont_enc.to(device)
-    cat_mask_temp = cat_mask + model.cat_mask_offset.type_as(cat_mask)
+    # x_cont_enc = x_cont_enc.to(device)
+    # print(f"[INFO] x_cont_enc: {x_cont_enc}\nx_cont_enc shape: {x_cont_enc.shape}\n")
+    # cat_mask_temp = cat_mask + model.cat_mask_offset.type_as(cat_mask)
     con_mask_temp = con_mask + model.con_mask_offset.type_as(con_mask)
 
+    x_cont_enc = x_cont_enc.to(device)
+    print(f"[INFO] x_cont_enc: {x_cont_enc}\nx_cont_enc shape: {x_cont_enc.shape}\n")
+
+    # Adjustment of the cat offset where we prepend as above to have matching shapes with the cls token concatenation
+    cat_off = model.cat_mask_offset
+    if cat_off.size(0) == cat_mask.size(1) - 1:
+        zeros = torch.zeros(1, dtype=cat_off.dtype, device=cat_mask.device)
+        cat_off = torch.cat([zeros, cat_off], dim=0)
+    
+    cat_mask_temp = cat_mask + cat_off.type_as(cat_mask)
 
     cat_mask_temp = model.mask_embeds_cat(cat_mask_temp)
     con_mask_temp = model.mask_embeds_cont(con_mask_temp)
