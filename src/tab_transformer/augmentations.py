@@ -3,11 +3,11 @@ import numpy as np
 from torch import Tensor
 
 def permute_data (x1:Tensor,
-                           x2:Tensor,
-                            y=None,
-                            alpha=0.2,
-                            use_cuda=True
-                           ):
+                    x2:Tensor,
+                    y=None,
+                    alpha=0.2,
+                    use_cuda=True
+):
     
     """
     Returns mixed inputs with per-sample mixing coefficients.
@@ -52,3 +52,60 @@ def permute_data (x1:Tensor,
         return mixed_x1, mixed_x2, y_a, y_b, lam
     
     return mixed_x1, mixed_x2, lam
+
+def embed_data_mask(x_categ:Tensor, 
+                    x_cont:Tensor, 
+                    cat_mask:Tensor, 
+                    con_mask:Tensor, 
+                    model:torch.nn.Module, 
+                    vision_dset:bool=False):
+
+    """
+    Embed raw categorical & continuous inputs and apply mask embeddings.
+
+    Args:
+        x_categ: Integer category indices, shape (B, n_cat)
+        x_cont: Raw continuous feature values, shape (B, n_cont)
+        cat_mask: Binary mask for categorical tokens (1 = keep, 0 = mask), shape (B, n_cat)
+        con_mask): Binary mask for continuous tokens (1 = keep, 0 = mask), shape (B, n_cont)
+        model: A SAINT model instance, providing the offsets, embedding tables, and mlps
+        vision_dset: If True, add positional encodings to x_categ_enc. Default: False
+
+    Returns:
+        tuple:
+            x_categ: Offset category indices after adding model.categories_offset, shape (B, n_cat)
+            x_categ_enc: Embedded (and masked) categorical tokens, shape (B, n_cat, dim)
+            x_cont_enc: Embedded (and masked) continuous tokens, shape (B, n_cont, dim)
+    """
+
+    device = x_cont.device
+    x_categ = x_categ + model.categories_offset.type_as(x_categ)
+    x_categ_enc = model.embeds(x_categ)
+    n1,n2 = x_cont.shape
+    _, n3 = x_categ.shape
+    if model.cont_embeddings == 'MLP':
+        x_cont_enc = torch.empty(n1,n2, model.dim)
+        for i in range(model.num_continuous):
+            x_cont_enc[:,i,:] = model.simple_MLP[i](x_cont[:,i])
+    else:
+        raise Exception('This case should not work!')    
+
+
+    x_cont_enc = x_cont_enc.to(device)
+    cat_mask_temp = cat_mask + model.cat_mask_offset.type_as(cat_mask)
+    con_mask_temp = con_mask + model.con_mask_offset.type_as(con_mask)
+
+
+    cat_mask_temp = model.mask_embeds_cat(cat_mask_temp)
+    con_mask_temp = model.mask_embeds_cont(con_mask_temp)
+    x_categ_enc[cat_mask == 0] = cat_mask_temp[cat_mask == 0]
+    x_cont_enc[con_mask == 0] = con_mask_temp[con_mask == 0]
+
+    if vision_dset:
+        
+        pos = np.tile(np.arange(x_categ.shape[-1]),(x_categ.shape[0],1))
+        pos =  torch.from_numpy(pos).to(device)
+        pos_enc =model.pos_encodings(pos)
+        x_categ_enc+=pos_enc
+
+    return x_categ, x_categ_enc, x_cont_enc

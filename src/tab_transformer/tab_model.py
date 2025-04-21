@@ -43,8 +43,8 @@ class SAINT(nn.Module):
         self.num_special_tokens = num_special_tokens
         self.total_tokens = self.num_unique_categories + num_special_tokens
 
-        print(f"[INIT] #categories={self.num_categories}, #unique_categories={self.num_unique_categories}, #special_tokens={self.num_special_tokens}")
-        print(f"[INIT] total_tokens (vocab size) = {self.total_tokens}")
+        # print(f"[INIT] #categories={self.num_categories}, #unique_categories={self.num_unique_categories}, #special_tokens={self.num_special_tokens}")
+        # print(f"[INIT] total_tokens (vocab size) = {self.total_tokens}")
 
         # For automatically offsetting unique category ids to the correct position in the categories embedding table
 
@@ -59,7 +59,7 @@ class SAINT(nn.Module):
         self.norm = nn.LayerNorm(num_continuous)
         self.cont_embeddings = cont_embeddings
 
-        print(f"[INIT] #continuous features = {self.num_continuous}, cont_embeddings = '{self.cont_embeddings}'")
+        # print(f"[INIT] #continuous features = {self.num_continuous}, cont_embeddings = '{self.cont_embeddings}'")
 
         # --- 3. Intermediate Sizes ---
 
@@ -67,7 +67,7 @@ class SAINT(nn.Module):
         self.attentiontype = attentiontype
         self.final_mlp_style = final_mlp_style
 
-        print(f"[INIT] embedding dim = {self.dim}, attentiontype = '{self.attentiontype}', final_mlp_style = '{self.final_mlp_style}'")
+        # print(f"[INIT] embedding dim = {self.dim}, attentiontype = '{self.attentiontype}', final_mlp_style = '{self.final_mlp_style}'")
 
         if self.cont_embeddings == 'MLP':
 
@@ -86,7 +86,7 @@ class SAINT(nn.Module):
             input_size = (dim * self.num_categories) + num_continuous
             nfeats = self.num_categories 
 
-        print(f"[INIT] computed input_size for final MLP = {input_size}, nfeats = {nfeats}")
+        # print(f"[INIT] computed input_size for final MLP = {input_size}, nfeats = {nfeats}")
 
         # --- 4. Transformer Instantiation ---
 
@@ -116,7 +116,7 @@ class SAINT(nn.Module):
                 style = attentiontype
             )
 
-        print(f"[INIT] Transformer built: {self.transformer.__class__.__name__}")
+        # print(f"[INIT] Transformer built: {self.transformer.__class__.__name__}")
 
         # --- 5. Token & Mask Embeddings ---
 
@@ -126,7 +126,7 @@ class SAINT(nn.Module):
         
         self.mlp = MLP(all_dimensions, act = mlp_act)
 
-        print(f"[INIT] Head MLP dims = {all_dimensions}")
+        # print(f"[INIT] Head MLP dims = {all_dimensions}")
 
         # Embeddings for categorical tokens
         self.embeds = nn.Embedding(self.total_tokens, self.dim) #.to(device)
@@ -147,7 +147,7 @@ class SAINT(nn.Module):
         self.single_mask = nn.Embedding(2, self.dim)
         self.pos_encodings = nn.Embedding(self.num_categories+ self.num_continuous, self.dim)
 
-        print(f"[INIT] Mask & position embeddings created")
+        # print(f"[INIT] Mask & position embeddings created")
         
         # --- 6. Final MLP Heads ---
 
@@ -165,15 +165,15 @@ class SAINT(nn.Module):
 
     def forward(self, x_categ, x_cont):
 
-        print(f"[FORWARD] x_categ.shape = {x_categ.shape}, x_cont.shape = {x_cont.shape}")
+        # print(f"[FORWARD] x_categ.shape = {x_categ.shape}, x_cont.shape = {x_cont.shape}")
         x = self.transformer(x_categ, x_cont)
-        print(f"[FORWARD] After transformer, x.shape = {x.shape}")
+        # print(f"[FORWARD] After transformer, x.shape = {x.shape}")
 
         cat_part = x[:, :, self.num_categories, :]
         cont_part = x[:, self.num_categoties :, :]
-        print(f"[FORWARD] cat_part.shape = {cat_part.shape}, cont_part.shape = {cont_part.shape}")
+        # print(f"[FORWARD] cat_part.shape = {cat_part.shape}, cont_part.shape = {cont_part.shape}")
 
         cat_outs = self.mlp1(cat_part)
         con_outs = self.mlp2(cont_part)
-        print(f"[FORWARD] out_cat.shape = {cat_outs.shape}, out_con.shape = {con_outs.shape}")
+        # print(f"[FORWARD] out_cat.shape = {cat_outs.shape}, out_con.shape = {con_outs.shape}")
         return cat_outs, con_outs 

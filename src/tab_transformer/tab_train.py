@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-# from augmentations import permute_data
+from src.tab_transformer.augmentations import permute_data, embed_data_mask
 from src.tab_transformer.tab_model import SAINT
 from src.tab_transformer.tab_utils import TabularDataset
 from helper_functions import set_seeds
@@ -33,35 +33,43 @@ def train_step(
     It returns a tuple of training loss and training accuracy metrics
     """
 
+    model.train()
+
     train_loss, train_acc = 0, 0
 
     for batch, data in enumerate(dataloader):
 
-        X, y = X.to(device), y.to(device)
-
-        # Forward pass
-        y_pred = model(X)
-
-        # Calculate and accumulate loss
-        loss = loss_fn(y_pred, y)
-        train_loss += loss.item()
-
-        # Optimizer zero grad
         optimizer.zero_grad()
 
-        # Loss backward
-        loss.backward()
+        x_categ, x_cont, y_gts, cat_mask, con_mask = data[0].to(device), data[1].to(device), data[2].to(device), data[3].to(device), data[4].to(device)
+        print(f"x_categ: {x_categ}\nx_cont: {x_cont}\ny_gts: {y_gts}\ncat_mask:{cat_mask}\ncon_mask:{con_mask}\n")
 
-        # Optimizer step
-        optimizer.step()
 
-        # Accuracy metric across all batches
-        y_pred_class = torch.argmax(torch.softmax(y_pred, dim=1), dim=1)
-        train_acc += (y_pred_class == y).sum().item()/len(y_pred)
+        _, x_categ_enc, x_cont_enc = embed_data_mask(x_categ, x_cont, cat_mask, con_mask,model, False)  
+        reps = model.transformer(x_categ_enc, x_cont_enc)         
+    #     # Forward pass
+    #     y_pred = model(X)
 
-    train_loss /= len(dataloader)
-    train_acc /= len(dataloader)
-    return train_loss, train_acc
+    #     # Calculate and accumulate loss
+    #     loss = loss_fn(y_pred, y)
+    #     train_loss += loss.item()
+
+    #     # Optimizer zero grad
+    #     optimizer.zero_grad()
+
+    #     # Loss backward
+    #     loss.backward()
+
+    #     # Optimizer step
+    #     optimizer.step()
+
+    #     # Accuracy metric across all batches
+    #     y_pred_class = torch.argmax(torch.softmax(y_pred, dim=1), dim=1)
+    #     train_acc += (y_pred_class == y).sum().item()/len(y_pred)
+
+    # train_loss /= len(dataloader)
+    # train_acc /= len(dataloader)
+    # return train_loss, train_acc
 
 def test_step(
     model: torch.nn.Module, 
@@ -145,12 +153,6 @@ def train(
         "test_loss": [],
         "test_acc": []
     }
-
-    best_val_auroc = 0
-    best_val_acc = 0
-    best_test_auroc = 0
-    best_test_acc = 0
-
 
     for epoch in tqdm(range(epochs)):
         
