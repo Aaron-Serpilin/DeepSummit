@@ -73,7 +73,9 @@ class SAINT(nn.Module):
 
             self.simple_MLP = nn.ModuleList([simple_MLP([1,100,self.dim]) for _ in range(self.num_continuous)])
             input_size = (dim * self.num_categories)  + (dim * num_continuous)
-            nfeats = self.num_categories + num_continuous
+            print(f"special tokens: {self.num_special_tokens}\ncategories: {self.num_categories}\ncontinuos: {num_continuous}")
+            nfeats = self.num_special_tokens + self.num_categories + num_continuous # we add num_special_tokens to account for the cls token
+            # nfeats = self.num_categories + num_continuous
 
         elif self.cont_embeddings == 'pos_singleMLP':
 

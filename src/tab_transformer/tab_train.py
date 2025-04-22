@@ -42,10 +42,10 @@ def train_step(
         optimizer.zero_grad()
 
         x_categ, x_cont, y_gts, cat_mask, con_mask = data[0].to(device), data[1].to(device), data[2].to(device), data[3].to(device), data[4].to(device)
-        # print(f"x_categ: {x_categ}\nx_cont: {x_cont}\ny_gts: {y_gts}\ncat_mask:{cat_mask}\ncon_mask:{con_mask}\n")
-
-        _, x_categ_enc, x_cont_enc = embed_data_mask(x_categ, x_cont, cat_mask, con_mask,model, False)  
-        # reps = model.transformer(x_categ_enc, x_cont_enc)         
+        # Converting data into embeddings
+        _, x_categ_emb, x_cont_emb = embed_data_mask(x_categ, x_cont, cat_mask, con_mask,model, False)  
+        print(f"x_categ shape: {x_categ_emb.shape}\nx_cont_emb shape: {x_cont_emb.shape}\n")
+        reps = model.transformer(x_categ_emb, x_cont_emb)         
     #     # Forward pass
     #     y_pred = model(X)
 
