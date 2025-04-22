@@ -45,7 +45,7 @@ def train_step(
         # print(f"x_categ: {x_categ}\nx_cont: {x_cont}\ny_gts: {y_gts}\ncat_mask:{cat_mask}\ncon_mask:{con_mask}\n")
 
         _, x_categ_enc, x_cont_enc = embed_data_mask(x_categ, x_cont, cat_mask, con_mask,model, False)  
-        reps = model.transformer(x_categ_enc, x_cont_enc)         
+        # reps = model.transformer(x_categ_enc, x_cont_enc)         
     #     # Forward pass
     #     y_pred = model(X)
 
