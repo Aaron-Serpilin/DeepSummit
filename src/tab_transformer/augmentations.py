@@ -82,9 +82,9 @@ def embed_data_mask(x_categ:Tensor,
     
     # The size is (Batch Size, n_cat + 1) where the +1 is due to the prepended cls token in TabularDataset
     # We only deal with adjusting the offset size of the categorical data since we only appended the cls token once per instance in TabularDataset
-    offsets = model.categories_offset
+    offsets = model.categories_offset.to(device)
     if offsets.size(0) == x_categ.size(1) - 1:
-        zeros = torch.zeros(1, dtype=offsets.dtype, device=x_categ.device)
+        zeros = torch.zeros(1, dtype=offsets.dtype, device=device)
         offsets = torch.cat([zeros, offsets], dim=0)
 
     x_categ += offsets.type_as(x_categ)
@@ -105,7 +105,7 @@ def embed_data_mask(x_categ:Tensor,
     # Adjustment of the cat offset where we prepend as above to have matching shapes with the cls token concatenation
     cat_off = model.cat_mask_offset
     if cat_off.size(0) == cat_mask.size(1) - 1:
-        zeros = torch.zeros(1, dtype=cat_off.dtype, device=cat_mask.device)
+        zeros = torch.zeros(1, dtype=cat_off.dtype, device=device)
         cat_off = torch.cat([zeros, cat_off], dim=0)
     
     cat_mask_temp = cat_mask + cat_off.type_as(cat_mask)
