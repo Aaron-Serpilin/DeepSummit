@@ -165,7 +165,7 @@ def train(
             device=device
         )
 
-        print(f"Epoch: {epoch+1} | train_loss: {train_loss:.4f} | train_acc: {train_acc:.4f} | test_loss: {test_loss:.4f} | test_acc: {test_acc:.4f}")
+        print(f"Epoch: {epoch+1} | train_loss: {train_loss:.4f} | train_acc: {train_acc:.4f} | val_loss: {val_loss:.4f} | val_acc: {val_acc:.4f} | test_loss: {test_loss:.4f} | test_acc: {test_acc:.4f}")
 
         results["train_loss"].append(train_loss)
         results["train_acc"].append(train_acc)
