@@ -3,8 +3,7 @@ from torch import nn
 
 from src.tab_transformer.augmentations import embed_data_mask
 from helper_functions import set_seeds
-
-from torch.utils.data import DataLoader
+import torch.nn.functional as F
 
 import os
 import numpy as np
@@ -84,18 +83,26 @@ def test_step(
 
     with torch.inference_mode():
 
-        for batch, (X, y) in enumerate(dataloader):
-            X, y = X.to(device), y.to(device)
+        for batch, data in enumerate(dataloader):
+
+            x_categ, x_cont, y_true, cat_mask, con_mask = data[0].to(device), data[1].to(device), data[2].to(device), data[3].to(device), data[4].to(device)
+
+            # Converting data into embeddings
+            _, x_categ_emb, x_cont_emb = embed_data_mask(x_categ, x_cont, cat_mask, con_mask,model, False) 
+            sequence_embeddings = model.transformer(x_categ_emb, x_cont_emb) 
+
+            # Extracting the cls token from each instance
+            cls_embeddings = sequence_embeddings[:, 0, :] 
 
             # Forward pass
-            test_pred_logits = model(X)
+            y_pred = model.mlpfory(cls_embeddings) 
 
             # Calculate and accumulate loss
-            loss = loss_fn(test_pred_logits, y)
+            loss = loss_fn(y_pred, y_true)
             test_loss = loss.item()
 
-            test_pred_labels = test_pred_logits.argmax(dim=1)
-            test_acc += ((test_pred_labels == y).sum().item()/len(test_pred_labels))
+            test_pred_labels = y_pred.argmax(dim=1)
+            test_acc += ((test_pred_labels == y_true).sum().item()/len(test_pred_labels))
             
     test_loss /= len(dataloader)
     test_acc /= len(dataloader)
