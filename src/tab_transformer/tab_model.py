@@ -22,7 +22,7 @@ class SAINT(nn.Module):
         dim_out = 1, # final output dimension
         mlp_hidden_mults = (4, 2), # multipliers for the final MLP hidden layers
         mlp_act = None, # activation final MLP
-        num_special_tokens = 0,
+        num_special_tokens = 1,
         attn_dropout = 0., # attention dropout
         ff_dropout = 0., # feed-forward dropout
         cont_embeddings = 'MLP', # how to embed continuous
@@ -73,7 +73,6 @@ class SAINT(nn.Module):
 
             self.simple_MLP = nn.ModuleList([simple_MLP([1,100,self.dim]) for _ in range(self.num_continuous)])
             input_size = (dim * self.num_categories)  + (dim * num_continuous)
-            print(f"special tokens: {self.num_special_tokens}\ncategories: {self.num_categories}\ncontinuos: {num_continuous}")
             nfeats = self.num_special_tokens + self.num_categories + num_continuous # we add num_special_tokens to account for the cls token
             # nfeats = self.num_categories + num_continuous
 

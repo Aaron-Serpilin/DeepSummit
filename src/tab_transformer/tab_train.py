@@ -39,36 +39,31 @@ def train_step(
 
     for batch, data in enumerate(dataloader):
 
+        # Need to define y
         optimizer.zero_grad()
+        x_categ, x_cont, y_true, cat_mask, con_mask = data[0].to(device), data[1].to(device), data[2].to(device), data[3].to(device), data[4].to(device)
 
-        x_categ, x_cont, y_gts, cat_mask, con_mask = data[0].to(device), data[1].to(device), data[2].to(device), data[3].to(device), data[4].to(device)
         # Converting data into embeddings
-        _, x_categ_emb, x_cont_emb = embed_data_mask(x_categ, x_cont, cat_mask, con_mask,model, False)  
-        print(f"x_categ shape: {x_categ_emb.shape}\nx_cont_emb shape: {x_cont_emb.shape}\n")
-        reps = model.transformer(x_categ_emb, x_cont_emb)         
-    #     # Forward pass
-    #     y_pred = model(X)
+        _, x_categ_emb, x_cont_emb = embed_data_mask(x_categ, x_cont, cat_mask, con_mask,model, False) 
+        sequence_embeddings = model.transformer(x_categ_emb, x_cont_emb) 
 
-    #     # Calculate and accumulate loss
-    #     loss = loss_fn(y_pred, y)
-    #     train_loss += loss.item()
+        # Extracting the cls token from each instance
+        cls_embeddings = sequence_embeddings[:, 0, :] 
 
-    #     # Optimizer zero grad
-    #     optimizer.zero_grad()
+        # Forward pass
+        y_pred = model.mlpfory(cls_embeddings) 
+        loss = loss_fn(y_pred, y_true)
+        train_loss += loss.item()
+        loss.backward()
+        optimizer.step()
 
-    #     # Loss backward
-    #     loss.backward()
-
-    #     # Optimizer step
-    #     optimizer.step()
-
-    #     # Accuracy metric across all batches
-    #     y_pred_class = torch.argmax(torch.softmax(y_pred, dim=1), dim=1)
-    #     train_acc += (y_pred_class == y).sum().item()/len(y_pred)
-
-    # train_loss /= len(dataloader)
-    # train_acc /= len(dataloader)
-    # return train_loss, train_acc
+        # Accuracy metrics across all batches
+        y_pred_class = torch.argmax(torch.softmax(y_pred, dim=1), dim=1)
+        train_acc += (y_pred_class == y_true).sum().item()/len(y_pred)
+    
+    train_loss /= len(dataloader)
+    train_acc /= len(dataloader)
+    return train_loss, train_acc
 
 def test_step(
     model: torch.nn.Module, 
