@@ -2,7 +2,6 @@ import torch
 from torch import nn
 
 from src.tab_transformer.augmentations import embed_data_mask
-from helper_functions import set_seeds
 import torch.nn.functional as F
 
 import os
@@ -113,13 +112,10 @@ def train(
     train_dataloader: torch.utils.data.DataLoader, 
     val_dataloader: torch.utils.data.DataLoader,
     test_dataloader: torch.utils.data.DataLoader, 
-    optimizer:str, 
+    optimizer:torch.optim.Optimizer, 
     loss_fn: torch.nn.Module, 
     epochs: int,
-    lr:float,
-    device: torch.device,
-    weight_decay:float,
-    betas:Tuple[float, float]=None
+    writer: torch.utils.tensorboard.writer.SummaryWriter
     ) -> Dict[str, List]:
 
     """ 
@@ -135,14 +131,6 @@ def train(
     """
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    set_seeds(42)
-
-    if optimizer == 'SGD':
-        optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=weight_decay)
-    elif optimizer == 'Adam':
-        optimizer = torch.optim.Adam(model.parameters(),lr=lr, betas=betas, weight_decay=weight_decay)
-    elif optimizer == 'AdamW':
-        optimizer = torch.optim.AdamW(model.parameters(),lr=lr, betas=betas, weight_decay=weight_decay)
 
     results = {
         "train_loss": [],
@@ -185,5 +173,19 @@ def train(
         results["val_acc"].append(val_acc)
         results["test_loss"].append(test_loss)
         results["test_acc"].append(test_acc)
+
+        if writer:
+          writer.add_scalars(main_tag="Loss",
+                            tag_scalar_dict={"train_loss": train_loss,
+                                              "test_loss": test_loss},
+                                              global_step=epoch)
+          writer.add_scalars(main_tag="Accuracy",
+                            tag_scalar_dict={"train_acc": train_acc,
+                                              "test_acc": test_acc},
+                                              global_step=epoch)
+
+          writer.close()
+        else:
+          pass
 
     return results
