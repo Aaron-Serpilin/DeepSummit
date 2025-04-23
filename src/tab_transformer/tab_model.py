@@ -1,7 +1,6 @@
 import torch
-from torch import nn, einsum
+from torch import nn
 import torch.nn.functional as F
-from einops import rearrange
 import numpy as np
 
 from src.tab_transformer.tab_attention import Transformer, RowColTransformer  
@@ -74,7 +73,6 @@ class SAINT(nn.Module):
             self.simple_MLP = nn.ModuleList([simple_MLP([1,100,self.dim]) for _ in range(self.num_continuous)])
             input_size = (dim * self.num_categories)  + (dim * num_continuous)
             nfeats = self.num_special_tokens + self.num_categories + num_continuous # we add num_special_tokens to account for the cls token
-            # nfeats = self.num_categories + num_continuous
 
         elif self.cont_embeddings == 'pos_singleMLP':
 
@@ -86,8 +84,6 @@ class SAINT(nn.Module):
             print('Continous features are not passed through attention')
             input_size = (dim * self.num_categories) + num_continuous
             nfeats = self.num_categories 
-
-        # print(f"[INIT] computed input_size for final MLP = {input_size}, nfeats = {nfeats}")
 
         # --- 4. Transformer Instantiation ---
 
@@ -117,8 +113,6 @@ class SAINT(nn.Module):
                 style = attentiontype
             )
 
-        # print(f"[INIT] Transformer built: {self.transformer.__class__.__name__}")
-
         # --- 5. Token & Mask Embeddings ---
 
         l = input_size // 8
@@ -126,8 +120,6 @@ class SAINT(nn.Module):
         all_dimensions = [input_size, *hidden_dimensions, dim_out]
         
         self.mlp = MLP(all_dimensions, act = mlp_act)
-
-        # print(f"[INIT] Head MLP dims = {all_dimensions}")
 
         # Embeddings for categorical tokens
         self.embeds = nn.Embedding(self.total_tokens, self.dim) #.to(device)
@@ -147,8 +139,6 @@ class SAINT(nn.Module):
         self.mask_embeds_cont = nn.Embedding(self.num_continuous*2, self.dim)
         self.single_mask = nn.Embedding(2, self.dim)
         self.pos_encodings = nn.Embedding(self.num_categories+ self.num_continuous, self.dim)
-
-        # print(f"[INIT] Mask & position embeddings created")
         
         # --- 6. Final MLP Heads ---
 
@@ -166,15 +156,9 @@ class SAINT(nn.Module):
 
     def forward(self, x_categ, x_cont):
 
-        # print(f"[FORWARD] x_categ.shape = {x_categ.shape}, x_cont.shape = {x_cont.shape}")
         x = self.transformer(x_categ, x_cont)
-        # print(f"[FORWARD] After transformer, x.shape = {x.shape}")
-
         cat_part = x[:, :, self.num_categories, :]
-        cont_part = x[:, self.num_categoties :, :]
-        # print(f"[FORWARD] cat_part.shape = {cat_part.shape}, cont_part.shape = {cont_part.shape}")
-
+        cont_part = x[:, self.num_categories :, :]
         cat_outs = self.mlp1(cat_part)
         con_outs = self.mlp2(cont_part)
-        # print(f"[FORWARD] out_cat.shape = {cat_outs.shape}, out_con.shape = {con_outs.shape}")
         return cat_outs, con_outs 

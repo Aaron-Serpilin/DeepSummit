@@ -1,9 +1,7 @@
 import torch
 from torch import nn
 
-from src.tab_transformer.augmentations import permute_data, embed_data_mask
-from src.tab_transformer.tab_model import SAINT
-from src.tab_transformer.tab_utils import TabularDataset
+from src.tab_transformer.augmentations import embed_data_mask
 from helper_functions import set_seeds
 
 from torch.utils.data import DataLoader

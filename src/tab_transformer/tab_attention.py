@@ -4,7 +4,6 @@ import torch.nn.functional as F
 import numpy as np
 from einops import rearrange
 
-# from .tab_blocks import GEGLU, Residual, PreNorm
 from src.tab_transformer.tab_blocks import GEGLU, Residual, PreNorm
 
 class FeedForward (nn.Module):
@@ -154,13 +153,17 @@ class TabAttention(nn.Module):
 
     def forward(self, x_categ, x_cont,x_categ_enc,x_cont_enc):
         device = x_categ.device
+
         if self.attentiontype == 'justmlp':
+
             if x_categ.shape[-1] > 0:
                 flat_categ = x_categ.flatten(1).to(device)
                 x = torch.cat((flat_categ, x_cont.flatten(1).to(device)), dim = -1)
             else:
                 x = x_cont.clone()
+
         else:
+
             if self.cont_embeddings == 'MLP':
                 x = self.transformer(x_categ_enc,x_cont_enc.to(device))
             else:
@@ -168,7 +171,8 @@ class TabAttention(nn.Module):
                     x = x_cont.clone()
                 else: 
                     flat_categ = self.transformer(x_categ_enc).flatten(1)
-                    x = torch.cat((flat_categ, x_cont), dim = -1)                    
+                    x = torch.cat((flat_categ, x_cont), dim = -1) 
+
         flat_x = x.flatten(1)
         return self.mlp(flat_x)
     
@@ -221,6 +225,7 @@ class RowColTransformer(nn.Module):
         self.layers = nn.ModuleList([])
         self.mask_embed =  nn.Embedding(nfeats, dim)
         self.style = style
+
         for _ in range(depth):
             if self.style == 'colrow':
                 self.layers.append(nn.ModuleList([
@@ -236,9 +241,11 @@ class RowColTransformer(nn.Module):
                 ]))
 
     def forward(self, x, x_cont=None, mask = None):
+
         if x_cont is not None:
             x = torch.cat((x,x_cont),dim=1)
         _, n, _ = x.shape
+
         if self.style == 'colrow':
             for attn1, ff1, attn2, ff2 in self.layers: 
                 x = attn1(x)
