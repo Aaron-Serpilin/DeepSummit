@@ -13,7 +13,7 @@ from typing import Type, List, Tuple
 # PyTorch Imports
 import torch
 from torch import nn
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 
 # Torchvision (for image datasets and transforms)
 from torchvision import datasets, transforms

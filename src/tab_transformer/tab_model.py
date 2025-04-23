@@ -29,6 +29,7 @@ class SAINT(nn.Module):
         final_mlp_style = 'common',
         y_dim = 2 # output classes for classification
         ):
+        
         super().__init__()
         assert all(map(lambda n: n > 0, categories)), 'Number of each category must be positive'
       
@@ -41,9 +42,6 @@ class SAINT(nn.Module):
         # Create category embeddings table
         self.num_special_tokens = num_special_tokens
         self.total_tokens = self.num_unique_categories + num_special_tokens
-
-        # print(f"[INIT] #categories={self.num_categories}, #unique_categories={self.num_unique_categories}, #special_tokens={self.num_special_tokens}")
-        # print(f"[INIT] total_tokens (vocab size) = {self.total_tokens}")
 
         # For automatically offsetting unique category ids to the correct position in the categories embedding table
 
@@ -58,15 +56,11 @@ class SAINT(nn.Module):
         self.norm = nn.LayerNorm(num_continuous)
         self.cont_embeddings = cont_embeddings
 
-        # print(f"[INIT] #continuous features = {self.num_continuous}, cont_embeddings = '{self.cont_embeddings}'")
-
         # --- 3. Intermediate Sizes ---
 
         self.dim = dim
         self.attentiontype = attentiontype
         self.final_mlp_style = final_mlp_style
-
-        # print(f"[INIT] embedding dim = {self.dim}, attentiontype = '{self.attentiontype}', final_mlp_style = '{self.final_mlp_style}'")
 
         if self.cont_embeddings == 'MLP':
 

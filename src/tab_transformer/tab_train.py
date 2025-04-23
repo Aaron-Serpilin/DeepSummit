@@ -1,14 +1,12 @@
 import torch
 from torch import nn
-
-from src.tab_transformer.augmentations import embed_data_mask
 import torch.nn.functional as F
-
 import os
 import numpy as np
-
 from tqdm.auto import tqdm
 from typing import Dict, List, Tuple
+
+from src.tab_transformer.tab_augmentations import embed_data_mask
 
 def train_step(
     model: torch.nn.Module,
