@@ -15,9 +15,6 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 
-# Torchvision (for image datasets and transforms)
-from torchvision import datasets, transforms
-
 # Scikit-Learn for Data Splitting and Other Utilities
 from sklearn.model_selection import train_test_split
 
