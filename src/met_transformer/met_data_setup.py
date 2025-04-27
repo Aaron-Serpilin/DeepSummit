@@ -1,11 +1,8 @@
 import xarray as xr
+import pygrib
 import glob
 import pandas as pd
 from pathlib import Path
-
-era5_path = Path('data/era5_data/database_files')
-output_path = Path('data/era5_data/processed_csvs')
-output_path.mkdir(exist_ok=True, parents=True)
 
 weather_variable_list = [
     "10m_u_component_of_wind",
@@ -77,6 +74,7 @@ mountain_areas = {
     # "Annapurna I": ["30.05", "82.19", "27.05", "85.19"],
 }
 
+# Convert the era5_data files to grib for data processing
 def file_to_grib (home_path: Path):
     for mountain_dir in home_path.iterdir():
         if not mountain_dir.is_dir():
@@ -90,6 +88,73 @@ def file_to_grib (home_path: Path):
             print(f"Renaming: {file} -> {new_path}\n")
             file.rename(new_path)
 
-file_to_grib(era5_path)
+# The weather_variable_list are not the variables pygrib uses internally
+def get_variable_mapping (grib_path: Path):
+  grbs = pygrib.open(str(grib_path))
+  mapping = {msg.name: msg.shortName for msg in grbs}
+  grbs.close()
+  return mapping
 
+# We transform the pygrib file into a dataframe by grouping based ont he date, name, and value of the dataset
+def process_pygrib( grib_path: Path,
+                              vars_to_keep: list[str]
+                              ) -> pd.DataFrame:
+    
+  grbs = pygrib.open(str(grib_path))  
+  records = []
+  for msg in grbs:
+     if msg.shortName in vars_to_keep:
+        records.append({
+           'time': msg.validDate,
+           'variable': msg.shortName,
+           'value': float(msg.values.mean())
+        })
+
+  grbs.close()
+
+  if not records:
+     raise ValueError(f"No records found in {grib_path}.")
+  
+  df = pd.DataFrame(records)
+  # Each shortName (variable) is a column
+  df = df.pivot_table(index='time', columns='variable', values='value')
+  df = df.sort_index()
+  return df
+
+def process_grib_to_csv (era5_root: Path,
+                         csv_root: Path,
+                         vars_to_keep: list[str],
+                         ) -> None:
+   
+   for mountain_dir in era5_root.iterdir():
+      if not mountain_dir.is_dir():
+         continue
+      out_dir = csv_root / mountain_dir.name
+      out_dir.mkdir(parents=True, exist_ok=True)
+
+      for grib_file in mountain_dir.glob('*.grib'):
+          try:
+            df = process_pygrib(grib_file, vars_to_keep)
+            out_csv = out_dir / f"{grib_file.stem}.csv"
+            df.to_csv(out_csv)
+            print(f"Saved: {out_csv}")
+          except ValueError as e:
+            print(f"Skipping {grib_file}: {e}")
+
+era5_path = Path('data/era5_data/database_files')
+output_path = Path('data/era5_data/processed_csvs')
+output_path.mkdir(exist_ok=True, parents=True)
+
+mountain = "Everest"
+file = "Everest-1940-1944.grib"
+mountain_path = era5_path / mountain / file
+csv_path = era5_path / "processed_csvs"
+
+sample = next(era5_path.iterdir()) / (next(era5_path.iterdir()).glob("*.grib").__next__().name)
+mapping = get_variable_mapping(sample)
+
+# for long_name, short in mapping.items():
+#       print(f"{short:8} ← {long_name}")
+
+process_grib_to_csv(era5_path, csv_path, mapping)
 
