@@ -91,19 +91,22 @@ def file_to_grib (home_path: Path):
 # The weather_variable_list are not the variables pygrib uses internally
 def get_variable_mapping (grib_path: Path):
   grbs = pygrib.open(str(grib_path))
-  mapping = {msg.name: msg.shortName for msg in grbs}
+  mapping = {msg.shortName: msg.name for msg in grbs}
   grbs.close()
   return mapping
 
 # We transform the pygrib file into a dataframe by grouping based ont he date, name, and value of the dataset
-def process_pygrib( grib_path: Path,
-                              vars_to_keep: list[str]
-                              ) -> pd.DataFrame:
+def process_pygrib(grib_path: Path,
+                    vars_to_keep: list[str]
+                    ) -> pd.DataFrame:
     
   grbs = pygrib.open(str(grib_path))  
   records = []
+
   for msg in grbs:
+    #  print(f"The short name is: {msg.shortName}\n")
      if msg.shortName in vars_to_keep:
+        # print(f"shortName is: {msg.shortName}\n")
         records.append({
            'time': msg.validDate,
            'variable': msg.shortName,
@@ -148,7 +151,6 @@ output_path.mkdir(exist_ok=True, parents=True)
 mountain = "Everest"
 file = "Everest-1940-1944.grib"
 mountain_path = era5_path / mountain / file
-csv_path = era5_path / "processed_csvs"
 
 sample = next(era5_path.iterdir()) / (next(era5_path.iterdir()).glob("*.grib").__next__().name)
 mapping = get_variable_mapping(sample)
@@ -156,5 +158,6 @@ mapping = get_variable_mapping(sample)
 # for long_name, short in mapping.items():
 #       print(f"{short:8} ← {long_name}")
 
-process_grib_to_csv(era5_path, csv_path, mapping)
+vars_to_keep = list(mapping.keys())
+process_grib_to_csv(era5_path, output_path, vars_to_keep)
 
