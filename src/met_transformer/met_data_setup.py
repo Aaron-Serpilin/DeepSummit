@@ -63,17 +63,6 @@ weather_variable_list = [
     "total_column_snow_water",
 ]
 
-mountain_areas = {
-    "Everest": ["29.29", "85.25", "26.29", "88.25"]
-    # "Kangchenjunga": ["29.12", "86.38", "26.12", "89.38"],
-    # "Lhotse": ["29.27", "85.25", "26.27", "88.25"],
-    # "Makalu": ["29.23", "85.35", "26.23", "88.35"],
-    # "Cho Oyu": ["29.35", "85.09", "26.35", "88.09"],
-    # "Dhaulagiri I": ["30.11", "81.59", "27.11", "84.59"],
-    # "Manaslu": ["30.03", "83.03", "27.03", "86.03"],
-    # "Annapurna I": ["30.05", "82.19", "27.05", "85.19"],
-}
-
 # Convert the era5_data files to grib for data processing
 def file_to_grib (home_path: Path):
     for mountain_dir in home_path.iterdir():
@@ -88,14 +77,14 @@ def file_to_grib (home_path: Path):
             print(f"Renaming: {file} -> {new_path}\n")
             file.rename(new_path)
 
-# The weather_variable_list are not the variables pygrib uses internally
+# The weather_variable_list are not the variables pygrib uses internally, so we make a mapping with the abbreviations
 def get_variable_mapping (grib_path: Path):
   grbs = pygrib.open(str(grib_path))
   mapping = {msg.shortName: msg.name for msg in grbs}
   grbs.close()
   return mapping
 
-# We transform the pygrib file into a dataframe by grouping based ont he date, name, and value of the dataset
+# We transform the pygrib file into a dataframe by grouping based on the date, name, and value of the dataset
 def process_pygrib(grib_path: Path,
                     vars_to_keep: list[str]
                     ) -> pd.DataFrame:
@@ -104,9 +93,7 @@ def process_pygrib(grib_path: Path,
   records = []
 
   for msg in grbs:
-    #  print(f"The short name is: {msg.shortName}\n")
      if msg.shortName in vars_to_keep:
-        # print(f"shortName is: {msg.shortName}\n")
         records.append({
            'time': msg.validDate,
            'variable': msg.shortName,
@@ -148,15 +135,8 @@ era5_path = Path('data/era5_data/database_files')
 output_path = Path('data/era5_data/processed_csvs')
 output_path.mkdir(exist_ok=True, parents=True)
 
-mountain = "Everest"
-file = "Everest-1940-1944.grib"
-mountain_path = era5_path / mountain / file
-
 sample = next(era5_path.iterdir()) / (next(era5_path.iterdir()).glob("*.grib").__next__().name)
 mapping = get_variable_mapping(sample)
-
-# for long_name, short in mapping.items():
-#       print(f"{short:8} ← {long_name}")
 
 vars_to_keep = list(mapping.keys())
 process_grib_to_csv(era5_path, output_path, vars_to_keep)
