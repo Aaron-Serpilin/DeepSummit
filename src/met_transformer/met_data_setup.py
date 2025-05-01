@@ -118,14 +118,20 @@ def process_grib_to_csv (era5_root: Path,
    
    for mountain_dir in era5_root.iterdir():
       if not mountain_dir.is_dir():
-         continue
+        continue
+      
       out_dir = csv_root / mountain_dir.name
       out_dir.mkdir(parents=True, exist_ok=True)
 
       for grib_file in mountain_dir.glob('*.grib'):
+          
+          out_csv = out_dir / f"{grib_file.stem}.csv"
+          if out_csv.exists():
+            print(f"{out_csv.name} already exists. Skipping. ")
+            continue
+
           try:
             df = process_pygrib(grib_file, vars_to_keep)
-            out_csv = out_dir / f"{grib_file.stem}.csv"
             df.to_csv(out_csv)
             print(f"Saved: {out_csv}")
           except ValueError as e:
