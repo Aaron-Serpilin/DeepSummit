@@ -63,6 +63,66 @@ weather_variable_list = [
     "total_column_snow_water",
 ]
 
+# For convenience instead of running get_variable_mapping each time which takes ~3'
+weather_mapping = {
+    '10u':   '10 metre U wind component',
+    '10v':   '10 metre V wind component',
+    '2d':    '2 metre dewpoint temperature',
+    '2t':    '2 metre temperature',
+    'msl':   'Mean sea level pressure',
+    'sst':   'Sea surface temperature',
+    'sp':    'Surface pressure',
+    'tp':    'Total precipitation',
+    'istl1': 'Ice temperature layer 1',
+    'istl2': 'Ice temperature layer 2',
+    'istl3': 'Ice temperature layer 3',
+    'istl4': 'Ice temperature layer 4',
+    'mx2t':  'Maximum temperature at 2 metres since previous post-processing',
+    'mn2t':  'Minimum temperature at 2 metres since previous post-processing',
+    'skt':   'Skin temperature',
+    '100u':  '100 metre U wind component',
+    '100v':  '100 metre V wind component',
+    'u10n':  '10 metre u-component of neutral wind',
+    'v10n':  '10 metre v-component of neutral wind',
+    '10fg':  'Maximum 10 metre wind gust since previous post-processing',
+    'i10fg': 'Instantaneous 10 metre wind gust',
+    'cbh':   'Cloud base height',
+    'hcc':   'High cloud cover',
+    'lcc':   'Low cloud cover',
+    'mcc':   'Medium cloud cover',
+    'tcc':   'Total cloud cover',
+    'tciw':  'Total column cloud ice water',
+    'tclw':  'Total column cloud liquid water',
+    'viiwd': 'Vertical integral of divergence of cloud frozen water flux',
+    'vilwd': 'Vertical integral of divergence of cloud liquid water flux',
+    'viiwe': 'Vertical integral of eastward cloud frozen water flux',
+    'vilwe': 'Vertical integral of eastward cloud liquid water flux',
+    'viiwn': 'Vertical integral of northward cloud frozen water flux',
+    'vilwn': 'Vertical integral of northward cloud liquid water flux',
+    'cp':    'Convective precipitation',
+    'crr':   'Convective rain rate',
+    'ilspf': 'Instantaneous large-scale surface precipitation fraction',
+    'lsrr':  'Large scale rain rate',
+    'lsp':   'Large-scale precipitation',
+    'lspf':  'Large-scale precipitation fraction',
+    'mxtpr': 'Maximum total precipitation rate since previous post-processing',
+    'mntpr': 'Minimum total precipitation rate since previous post-processing',
+    'ptype': 'Precipitation type',
+    'tcrw':  'Total column rain water',
+    'csf':   'Convective snowfall',
+    'csfr':  'Convective snowfall rate water equivalent',
+    'lssfr': 'Large scale snowfall rate water equivalent',
+    'lsf':   'Large-scale snowfall',
+    'asn':   'Snow albedo',
+    'rsn':   'Snow density',
+    'sd':    'Snow depth',
+    'es':    'Snow evaporation',
+    'sf':    'Snowfall',
+    'smlt':  'Snowmelt',
+    'tsn':   'Temperature of snow layer',
+    'tcsw':  'Total column snow water'
+}
+
 # Convert the era5_data files to grib for data processing
 def file_to_grib (home_path: Path):
     for mountain_dir in home_path.iterdir():
@@ -116,34 +176,43 @@ def process_grib_to_csv (era5_root: Path,
                          vars_to_keep: list[str],
                          ) -> None:
    
-   for mountain_dir in era5_root.iterdir():
-      if not mountain_dir.is_dir():
-        continue
-      
-      out_dir = csv_root / mountain_dir.name
-      out_dir.mkdir(parents=True, exist_ok=True)
+  if any(era5_root.glob("*.grib")):
+     mountain_dirs = [era5_root]
+  else:
+     mountain_dirs = [dir for dir in era5_root.iterdir() if dir.is_dir()]
 
-      for grib_file in mountain_dir.glob('*.grib'):
-          
-          out_csv = out_dir / f"{grib_file.stem}.csv"
-          if out_csv.exists():
-            print(f"{out_csv.name} already exists. Skipping. ")
-            continue
+  for mountain_dir in mountain_dirs:
+    # if not mountain_dir.is_dir():
+    #   continue
+    
+    out_dir = csv_root / mountain_dir.name
+    out_dir.mkdir(parents=True, exist_ok=True)
 
-          try:
-            df = process_pygrib(grib_file, vars_to_keep)
-            df.to_csv(out_csv)
-            print(f"Saved: {out_csv}")
-          except ValueError as e:
-            print(f"Skipping {grib_file}: {e}")
+    for grib_file in mountain_dir.glob('*.grib'):
+        
+        out_csv = out_dir / f"{grib_file.stem}.csv"
+        if out_csv.exists():
+          print(f"{out_csv.name} already exists. Skipping. ")
+          continue
+
+        try:
+          df = process_pygrib(grib_file, vars_to_keep)
+          df.to_csv(out_csv)
+          print(f"Saved: {out_csv}")
+        except ValueError as e:
+          print(f"Skipping {grib_file}: {e}")
 
 era5_path = Path('data/era5_data/database_files')
 output_path = Path('data/era5_data/processed_csvs')
+test_path = Path('data/era5_data/database_files/Kangchenjunga')
 output_path.mkdir(exist_ok=True, parents=True)
 
 sample = next(era5_path.iterdir()) / (next(era5_path.iterdir()).glob("*.grib").__next__().name)
-mapping = get_variable_mapping(sample)
+# mapping = get_variable_mapping(sample)
+mapping = weather_mapping
 
+# print(f"len(mapping): {len(mapping)}\n")
+# print(f"len(weather_variable_list): {len(weather_variable_list)}\n")
 vars_to_keep = list(mapping.keys())
+# process_grib_to_csv(era5_path, output_path, vars_to_keep)
 process_grib_to_csv(era5_path, output_path, vars_to_keep)
-
