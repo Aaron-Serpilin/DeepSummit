@@ -140,6 +140,7 @@ def file_to_grib (home_path: Path):
 # The weather_variable_list are not the variables pygrib uses internally, so we make a mapping with the abbreviations
 def get_variable_mapping (grib_path: Path):
   grbs = pygrib.open(str(grib_path))
+  print(grbs)
   mapping = {msg.shortName: msg.name for msg in grbs}
   grbs.close()
   return mapping
@@ -152,18 +153,24 @@ def process_pygrib(grib_path: Path,
   grbs = pygrib.open(str(grib_path))  
   records = []
 
+  # print("Point 1 reached")
+  # print(f"grbs: {grbs}\n")
+ 
   for msg in grbs:
-     if msg.shortName in vars_to_keep:
-        records.append({
-           'time': msg.validDate,
-           'variable': msg.shortName,
-           'value': float(msg.values.mean())
-        })
+    #  print(f"grib_path: {grib_path}\nmsg: {msg}\nmsg.shortName: {msg.shortName}\n")
+    print(msg)
+
+    if msg.shortName in vars_to_keep:
+      records.append({
+          'time': msg.validDate,
+          'variable': msg.shortName,
+          'value': float(msg.values.mean())
+      })
 
   grbs.close()
 
   if not records:
-     raise ValueError(f"No records found in {grib_path}.")
+     raise ValueError(f"No records found in {grib_path}")
   
   df = pd.DataFrame(records)
   # Each shortName (variable) is a column
@@ -202,17 +209,43 @@ def process_grib_to_csv (era5_root: Path,
         except ValueError as e:
           print(f"Skipping {grib_file}: {e}")
 
+def print_grib_contents(grib_path: Path) -> None:
+    """
+    Open the given .grib file and print out all contained messages
+    with their key attributes.
+    """
+    print(f"\nOpening GRIB: {grib_path}\n" + "-"*60)
+    grbs = pygrib.open(str(grib_path))
+    for idx, msg in enumerate(grbs, start=1):
+        print(f"Message {idx}: {msg}")
+        print(f"    shortName : {msg.shortName}")
+        print(f"    name      : {msg.name}")
+        print(f"    level     : {getattr(msg, 'level', 'n/a')}")
+        print(f"    validDate : {msg.validDate}")
+        print(f"    values.shape: {msg.values.shape}")
+        print("-"*60)
+    grbs.close()
+
 era5_path = Path('data/era5_data/database_files')
 output_path = Path('data/era5_data/processed_csvs')
-test_path = Path('data/era5_data/database_files/Kangchenjunga')
 output_path.mkdir(exist_ok=True, parents=True)
 
+test_path = Path('data/era5_data/database_files/Kangchenjunga')
+other_test_path = Path('data/era5_data/database_files/Manaslu')
+
 sample = next(era5_path.iterdir()) / (next(era5_path.iterdir()).glob("*.grib").__next__().name)
+# test_sample = Path("data/era5_data/database_files/Kangchenjunga/Kangchenjunga-1940-1944.grib")
+test_sample = Path("data/era5_data/database_files/Everest/Everest-1940-1944.grib")
 # mapping = get_variable_mapping(sample)
+test_mapping = get_variable_mapping(test_sample)
+print(test_mapping)
 mapping = weather_mapping
 
 # print(f"len(mapping): {len(mapping)}\n")
 # print(f"len(weather_variable_list): {len(weather_variable_list)}\n")
-vars_to_keep = list(mapping.keys())
+vars_to_keep = list(test_mapping.keys())
 # process_grib_to_csv(era5_path, output_path, vars_to_keep)
-process_grib_to_csv(era5_path, output_path, vars_to_keep)
+print_grib_contents(test_sample)
+# process_grib_to_csv(test_path, output_path, vars_to_keep)
+
+
