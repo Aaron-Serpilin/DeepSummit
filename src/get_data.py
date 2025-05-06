@@ -135,7 +135,7 @@ def submit_request(mountain, year_batch):
     tokenized_mountain = mountain.replace(" ", "-")
     mountain_folder = era5_data_path / mountain
     mountain_folder.mkdir(parents=True, exist_ok=True)
-    output_file = mountain_folder / f"{tokenized_mountain}-{start_year}-{end_year}"
+    output_file = mountain_folder / f"{tokenized_mountain}-{start_year}-{end_year}.grib"
     
     if output_file.exists():
         print(f"File {output_file} already exists. Skipping request for {mountain} {start_year}-{end_year}.")

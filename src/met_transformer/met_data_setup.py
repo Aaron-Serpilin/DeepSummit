@@ -139,8 +139,9 @@ def file_to_grib (home_path: Path):
 
 # The weather_variable_list are not the variables pygrib uses internally, so we make a mapping with the abbreviations
 def get_variable_mapping (grib_path: Path):
+
   grbs = pygrib.open(str(grib_path))
-  print(grbs)
+  # print(grbs)
   mapping = {msg.shortName: msg.name for msg in grbs}
   grbs.close()
   return mapping
@@ -158,7 +159,7 @@ def process_pygrib(grib_path: Path,
  
   for msg in grbs:
     #  print(f"grib_path: {grib_path}\nmsg: {msg}\nmsg.shortName: {msg.shortName}\n")
-    print(msg)
+    # print(msg)
 
     if msg.shortName in vars_to_keep:
       records.append({
@@ -232,20 +233,20 @@ output_path.mkdir(exist_ok=True, parents=True)
 
 test_path = Path('data/era5_data/database_files/Kangchenjunga')
 other_test_path = Path('data/era5_data/database_files/Manaslu')
+# test_sample = Path("data/era5_data/database_files/Kangchenjunga/Kangchenjunga-2015-2019.grib")
+test_sample = Path("data/era5_data/database_files/Kangchenjunga/Kangchenjunga-2005-2009.grib")
+# print_grib_contents(test_sample) # 2005 - 2009 works
 
 sample = next(era5_path.iterdir()) / (next(era5_path.iterdir()).glob("*.grib").__next__().name)
-# test_sample = Path("data/era5_data/database_files/Kangchenjunga/Kangchenjunga-1940-1944.grib")
-test_sample = Path("data/era5_data/database_files/Everest/Everest-1940-1944.grib")
 # mapping = get_variable_mapping(sample)
-test_mapping = get_variable_mapping(test_sample)
-print(test_mapping)
-mapping = weather_mapping
+# test_mapping = get_variable_mapping(test_sample)
+# print(test_mapping)
+mapping = weather_mapping 
 
-# print(f"len(mapping): {len(mapping)}\n")
-# print(f"len(weather_variable_list): {len(weather_variable_list)}\n")
-vars_to_keep = list(test_mapping.keys())
-# process_grib_to_csv(era5_path, output_path, vars_to_keep)
-print_grib_contents(test_sample)
+# file_to_grib(Path("data/era5_data/database_files"))
+# vars_to_keep = list(test_mapping.keys())
+vars_to_keep = list(mapping.keys())
+process_grib_to_csv(era5_path, output_path, vars_to_keep)
 # process_grib_to_csv(test_path, output_path, vars_to_keep)
 
 
