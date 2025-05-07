@@ -113,7 +113,7 @@ mountain_areas = {
 
 client = cdsapi.Client()
 era5_dataset = "reanalysis-era5-single-levels"
-era5_data_path = Path('data/era5_data')
+era5_data_path = Path('data/era5_data/database_files')
 era5_data_path.mkdir(parents=True, exist_ok=True)
 
 # Here we create the 5-year batches for the data
@@ -135,7 +135,7 @@ def submit_request(mountain, year_batch):
     tokenized_mountain = mountain.replace(" ", "-")
     mountain_folder = era5_data_path / mountain
     mountain_folder.mkdir(parents=True, exist_ok=True)
-    output_file = mountain_folder / f"{tokenized_mountain}-{start_year}-{end_year}"
+    output_file = mountain_folder / f"{tokenized_mountain}-{start_year}-{end_year}.grib"
     
     if output_file.exists():
         print(f"File {output_file} already exists. Skipping request for {mountain} {start_year}-{end_year}.")
@@ -167,8 +167,8 @@ def request_mountain_data(mountain):
             start_year, end_year = year_batch[0], year_batch[-1]
             try:
                 future.result()
-                # print(f"Submission completed for {mountain} for years {start_year}-{end_year}.")
+                print(f"Submission completed for {mountain} for years {start_year}-{end_year}.")
             except Exception as e:
                 print(f"Submission failed for {mountain} for years {start_year}-{end_year}: {e}")
 
-request_mountain_data("Cho Oyu")
+request_mountain_data("Kangchenjunga")
