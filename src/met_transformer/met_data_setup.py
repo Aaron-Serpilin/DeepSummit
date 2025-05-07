@@ -63,7 +63,7 @@ weather_variable_list = [
     "total_column_snow_water",
 ]
 
-# For convenience instead of running get_variable_mapping each time which takes ~3'
+# For convenience instead of running get_variable_mapping each time which takes ~3 minutes
 weather_mapping = {
     '10u':   '10 metre U wind component',
     '10v':   '10 metre V wind component',
@@ -125,6 +125,12 @@ weather_mapping = {
 
 # Convert the era5_data files to grib for data processing
 def file_to_grib (home_path: Path):
+    
+    """
+    Rename every file under each mountain subfolder from its current suffix
+    to “.grib”, for downstream pygrib processing.
+    """
+
     for mountain_dir in home_path.iterdir():
         if not mountain_dir.is_dir():
             continue
@@ -140,6 +146,11 @@ def file_to_grib (home_path: Path):
 # The weather_variable_list are not the variables pygrib uses internally, so we make a mapping with the abbreviations
 def get_variable_mapping (grib_path: Path):
 
+  """
+  Open a single GRIB file and return a mapping from pygrib shortName codes
+  to their human-readable variable names.
+  """
+
   grbs = pygrib.open(str(grib_path))
   # print(grbs)
   mapping = {msg.shortName: msg.name for msg in grbs}
@@ -151,15 +162,17 @@ def process_pygrib(grib_path: Path,
                     vars_to_keep: list[str]
                     ) -> pd.DataFrame:
     
+  """
+  Extract specified variables from a GRIB into a time-indexed DataFrame.
+    
+  Opens the file with pygrib, filters messages by shortName, computes each
+  message’s spatial mean, pivots into columns, and sorts by timestamp.
+  """
+
   grbs = pygrib.open(str(grib_path))  
   records = []
 
-  # print("Point 1 reached")
-  # print(f"grbs: {grbs}\n")
- 
   for msg in grbs:
-    #  print(f"grib_path: {grib_path}\nmsg: {msg}\nmsg.shortName: {msg.shortName}\n")
-    # print(msg)
 
     if msg.shortName in vars_to_keep:
       records.append({
@@ -184,15 +197,21 @@ def process_grib_to_csv (era5_root: Path,
                          vars_to_keep: list[str],
                          ) -> None:
    
+  """
+  Walk one or more mountain directories of .grib files, process each via
+  process_pygrib, and write out parallel .csv files in csv_root.
+  
+  If era5_root contains .grib files directly, it treats it as a single
+  mountain; otherwise it iterates over subdirectories.
+  """
+
   if any(era5_root.glob("*.grib")):
-     mountain_dirs = [era5_root]
+    mountain_dirs = [era5_root]
   else:
-     mountain_dirs = [dir for dir in era5_root.iterdir() if dir.is_dir()]
+    mountain_dirs = [dir for dir in era5_root.iterdir() if dir.is_dir()]
 
   for mountain_dir in mountain_dirs:
-    # if not mountain_dir.is_dir():
-    #   continue
-    
+
     out_dir = csv_root / mountain_dir.name
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -217,6 +236,7 @@ def print_grib_contents(grib_path: Path) -> None:
     """
     print(f"\nOpening GRIB: {grib_path}\n" + "-"*60)
     grbs = pygrib.open(str(grib_path))
+
     for idx, msg in enumerate(grbs, start=1):
         print(f"Message {idx}: {msg}")
         print(f"    shortName : {msg.shortName}")
@@ -231,22 +251,64 @@ era5_path = Path('data/era5_data/database_files')
 output_path = Path('data/era5_data/processed_csvs')
 output_path.mkdir(exist_ok=True, parents=True)
 
-test_path = Path('data/era5_data/database_files/Kangchenjunga')
-other_test_path = Path('data/era5_data/database_files/Manaslu')
-# test_sample = Path("data/era5_data/database_files/Kangchenjunga/Kangchenjunga-2015-2019.grib")
-test_sample = Path("data/era5_data/database_files/Kangchenjunga/Kangchenjunga-2005-2009.grib")
-# print_grib_contents(test_sample) # 2005 - 2009 works
-
-sample = next(era5_path.iterdir()) / (next(era5_path.iterdir()).glob("*.grib").__next__().name)
+# sample = next(era5_path.iterdir()) / (next(era5_path.iterdir()).glob("*.grib").__next__().name)
 # mapping = get_variable_mapping(sample)
-# test_mapping = get_variable_mapping(test_sample)
-# print(test_mapping)
 mapping = weather_mapping 
 
-# file_to_grib(Path("data/era5_data/database_files"))
-# vars_to_keep = list(test_mapping.keys())
-vars_to_keep = list(mapping.keys())
-process_grib_to_csv(era5_path, output_path, vars_to_keep)
-# process_grib_to_csv(test_path, output_path, vars_to_keep)
+# file_to_grib(era5_path)
+# vars_to_keep = list(mapping.keys())
+# process_grib_to_csv(era5_path, output_path, vars_to_keep)
+
+
+### First step, merge all the weather .csv weather files into a single file for ease. Add this file as {mountain}.csv in instances
+instances_path = Path('data/era5_data/instances')
+processed_path = Path('data/era5_data/processed_csvs')
+instances_path.mkdir(exist_ok=True, parents=True)
+
+def merge_weather_csvs(mountain_name: str,
+                       processed_root: Path = Path('data/era5_data/processed_csvs'),
+                       instances_root: Path = Path('data/era5_data/instances')
+                        ) -> None:
+    """
+    Merge all per-5-year CSVs for the given mountain into a single CSV
+    and save as instances/{mountain_name}.csv.
+    """
+    
+    mountain_dir = processed_root / mountain_name
+
+    if not mountain_dir.exists() or not mountain_dir.is_dir():
+        raise FileNotFoundError(f"No processed CSV directory found for {mountain_name} at {mountain_dir}")
+
+    # Read and concatenate all CSVs
+    df_list = []
+    for csv_file in sorted(mountain_dir.glob("*.csv")): # Important to sort it just in case since it is a time-series
+        df = pd.read_csv(csv_file, parse_dates=['time'])
+        df.set_index('time', inplace=True)
+        df_list.append(df)
+
+    if not df_list:
+        raise ValueError(f"No CSV files found for {mountain_name} at {mountain_dir}")
+
+    merged = pd.concat(df_list)
+    merged = merged[~merged.index.duplicated(keep='first')]
+    merged.sort_index(inplace=True)
+
+    instances_root.mkdir(parents=True, exist_ok=True)  # Ensure instances directory exists
+    mountain_name = mountain_name.replace(" ", "-")
+    out_file = instances_root / f"{mountain_name}.csv"
+
+    merged.to_csv(out_file)
+    print(f"Merged {len(df_list)} files for '{mountain_name}' into {out_file} ({len(merged)} rows)")
+
+merge_weather_csvs("Annapurna I")
+# 
+# Second step, obtain a single instance per day. Days are split into two instances at 00:00 and 18:00. Merge into one since the features one has the other lacks
+# 
+# Third step, inject peakid as it is the same code mapping as the tabular dataset. Use the peak and subpeakids for this
+# 
+# Fourth step, for each expedition in the tabular table (one row with peakid, date, success) pull the prior 10 daily rows from {mountain}.csv 
+# This will be the final ML ready table (one row per expedition with label and weather inputs). Next step will be to do the splits and dataloaders
+
+
 
 
