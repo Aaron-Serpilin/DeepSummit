@@ -300,7 +300,7 @@ def merge_weather_csvs(mountain_name: str,
     merged.to_csv(out_file)
     print(f"Merged {len(df_list)} files for '{mountain_name}' into {out_file} ({len(merged)} rows)")
 
-merge_weather_csvs("Annapurna I")
+merge_weather_csvs("Lhotse")
 # 
 # Second step, obtain a single instance per day. Days are split into two instances at 00:00 and 18:00. Merge into one since the features one has the other lacks
 # 
