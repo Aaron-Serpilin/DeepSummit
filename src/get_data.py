@@ -135,7 +135,7 @@ def submit_request(mountain, year_batch):
     tokenized_mountain = mountain.replace(" ", "-")
     mountain_folder = era5_data_path / mountain
     mountain_folder.mkdir(parents=True, exist_ok=True)
-    output_file = mountain_folder / f"{tokenized_mountain}-{start_year}-{end_year}.grib"
+    output_file = mountain_folder / f"{tokenized_mountain}-{start_year}-{end_year}"
     
     if output_file.exists():
         print(f"File {output_file} already exists. Skipping request for {mountain} {start_year}-{end_year}.")
@@ -148,7 +148,7 @@ def submit_request(mountain, year_batch):
     print(f"Submitting request for {mountain} for years {start_year}-{end_year}...")
     try:
         client.retrieve(era5_dataset, request, str(output_file))
-        # print(f"Request submitted for {mountain} for years {start_year}-{end_year}.")
+        print(f"Request submitted for {mountain} for years {start_year}-{end_year}.")
     except Exception as e:
         print(f"Error submitting request for {mountain} for years {start_year}-{end_year}: {e}")
 
@@ -171,4 +171,4 @@ def request_mountain_data(mountain):
             except Exception as e:
                 print(f"Submission failed for {mountain} for years {start_year}-{end_year}: {e}")
 
-request_mountain_data("Kangchenjunga")
+request_mountain_data("Cho Oyu")
