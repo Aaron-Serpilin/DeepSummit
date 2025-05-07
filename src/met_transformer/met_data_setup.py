@@ -123,7 +123,6 @@ weather_mapping = {
     'tcsw':  'Total column snow water'
 }
 
-# Convert the era5_data files to grib for data processing
 def file_to_grib (home_path: Path):
     
     """
@@ -143,12 +142,12 @@ def file_to_grib (home_path: Path):
             print(f"Renaming: {file} -> {new_path}\n")
             file.rename(new_path)
 
-# The weather_variable_list are not the variables pygrib uses internally, so we make a mapping with the abbreviations
 def get_variable_mapping (grib_path: Path):
 
   """
   Open a single GRIB file and return a mapping from pygrib shortName codes
-  to their human-readable variable names.
+  to their human-readable variable names. The weather_variable_list variables are not
+  the ones pygrib uses internally, so we make the corresponding mapping with the abbreviations
   """
 
   grbs = pygrib.open(str(grib_path))
@@ -157,7 +156,6 @@ def get_variable_mapping (grib_path: Path):
   grbs.close()
   return mapping
 
-# We transform the pygrib file into a dataframe by grouping based on the date, name, and value of the dataset
 def process_pygrib(grib_path: Path,
                     vars_to_keep: list[str]
                     ) -> pd.DataFrame:
@@ -229,45 +227,9 @@ def process_grib_to_csv (era5_root: Path,
         except ValueError as e:
           print(f"Skipping {grib_file}: {e}")
 
-def print_grib_contents(grib_path: Path) -> None:
-    """
-    Open the given .grib file and print out all contained messages
-    with their key attributes.
-    """
-    print(f"\nOpening GRIB: {grib_path}\n" + "-"*60)
-    grbs = pygrib.open(str(grib_path))
-
-    for idx, msg in enumerate(grbs, start=1):
-        print(f"Message {idx}: {msg}")
-        print(f"    shortName : {msg.shortName}")
-        print(f"    name      : {msg.name}")
-        print(f"    level     : {getattr(msg, 'level', 'n/a')}")
-        print(f"    validDate : {msg.validDate}")
-        print(f"    values.shape: {msg.values.shape}")
-        print("-"*60)
-    grbs.close()
-
-era5_path = Path('data/era5_data/database_files')
-output_path = Path('data/era5_data/processed_csvs')
-output_path.mkdir(exist_ok=True, parents=True)
-
-# sample = next(era5_path.iterdir()) / (next(era5_path.iterdir()).glob("*.grib").__next__().name)
-# mapping = get_variable_mapping(sample)
-mapping = weather_mapping 
-
-# file_to_grib(era5_path)
-# vars_to_keep = list(mapping.keys())
-# process_grib_to_csv(era5_path, output_path, vars_to_keep)
-
-
-### First step, merge all the weather .csv weather files into a single file for ease. Add this file as {mountain}.csv in instances
-instances_path = Path('data/era5_data/instances')
-processed_path = Path('data/era5_data/processed_csvs')
-instances_path.mkdir(exist_ok=True, parents=True)
-
 def merge_weather_csvs(mountain_name: str,
                        processed_root: Path = Path('data/era5_data/processed_csvs'),
-                       instances_root: Path = Path('data/era5_data/instances')
+                       instances_root: Path = Path('data/era5_data/instances/raw_instances')
                         ) -> None:
     """
     Merge all per-5-year CSVs for the given mountain into a single CSV
@@ -300,15 +262,63 @@ def merge_weather_csvs(mountain_name: str,
     merged.to_csv(out_file)
     print(f"Merged {len(df_list)} files for '{mountain_name}' into {out_file} ({len(merged)} rows)")
 
-merge_weather_csvs("Lhotse")
-# 
 # Second step, obtain a single instance per day. Days are split into two instances at 00:00 and 18:00. Merge into one since the features one has the other lacks
-# 
+# When merging all the .csv files together, there are two instances per day at 00:00 and 18:00 with complementary features. This function aims at merging these two instances into one, halving the amount of instances and making it more concise
+def merge_daily_instances(input_csv: Path,
+                          output_csv: Path
+                          ) -> None:
+  """
+   Read a weather CSV with two daily samples (00:00 and 18:00), merge them into a single daily record
+   by carrying forward and backward non-null values, and write out a new CSV indexed by date.
+  """
+
+  df = pd.read_csv(input_csv, parse_dates=['time'])
+  df.set_index('time', inplace=True)
+  df.sort_index(inplace=True)
+
+  # We combine the two daily readings by forward and back filling non-null values
+  df_daily = df.groupby(df.index.date).apply(lambda g: g.ffill().bfill().iloc[0])
+  # We redefine the index to be only the date and no longer the time
+  df_daily.index.name = 'date'
+  df_daily.index = pd.to_datetime(df_daily.index)
+
+  df_daily.to_csv(output_csv)
+  print(f"Merged {input_csv.name} into {output_csv.name}: {len(df)} -> {len(df_daily)} rows")
+
 # Third step, inject peakid as it is the same code mapping as the tabular dataset. Use the peak and subpeakids for this
-# 
+
 # Fourth step, for each expedition in the tabular table (one row with peakid, date, success) pull the prior 10 daily rows from {mountain}.csv 
 # This will be the final ML ready table (one row per expedition with label and weather inputs). Next step will be to do the splits and dataloaders
 
+############### 
 
+era5_path = Path('data/era5_data/database_files')
+output_path = Path('data/era5_data/processed_csvs')
+output_path.mkdir(exist_ok=True, parents=True)
 
+# Transform all the raw files to .grib for processing
+# file_to_grib(era5_path)
 
+# Obtain the variable mapping of the abbreviations pygrib uses internally
+# sample = next(era5_path.iterdir()) / (next(era5_path.iterdir()).glob("*.grib").__next__().name)
+# mapping = get_variable_mapping(sample)
+mapping = weather_mapping 
+
+# Transformation of the .grib files into a more usable .csv format based on the variable mapping
+vars_to_keep = list(mapping.keys())
+# process_grib_to_csv(era5_path, output_path, vars_to_keep)
+
+instances_path = Path('data/era5_data/instances')
+instances_path.mkdir(exist_ok=True, parents=True)
+raw_instances_path = Path('data/era5_data/instances/raw_instances')
+raw_instances_path.mkdir(exist_ok=True, parents=True)
+processed_path = Path('data/era5_data/processed_csvs')
+
+# Merging the multiple weather .csv files into a single one for training feasibility
+# merge_weather_csvs("Lhotse")
+
+merged_instances = Path('data/era5_data/instances/merged_instances')
+merged_instances.mkdir(exist_ok=True, parents=True)
+# Merging the two daily readings (00:00 and 18:00) into a single daily reading
+merge_daily_instances(Path('data/era5_data/instances/raw_instances/Annapurna-I.csv'),
+                      Path('data/era5_data/instances/merged_instances/Annapurna-I.csv'))
