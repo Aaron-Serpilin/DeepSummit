@@ -151,7 +151,6 @@ def get_variable_mapping (grib_path: Path):
   """
 
   grbs = pygrib.open(str(grib_path))
-  # print(grbs)
   mapping = {msg.shortName: msg.name for msg in grbs}
   grbs.close()
   return mapping
@@ -285,7 +284,84 @@ def merge_daily_instances(input_csv: Path,
   df_daily.to_csv(output_csv)
   print(f"Merged {input_csv.name} into {output_csv.name}: {len(df)} -> {len(df_daily)} rows")
 
-# Third step, inject peakid as it is the same code mapping as the tabular dataset. Use the peak and subpeakids for this
+# Third step, inject peakid as it is the same code mapping as the tabular dataset. Use the peak and sub-peak ids for this
+
+def build_event_instances (tabular_df: pd.DataFrame,
+                           instances_root: Path,
+                           n_context_days: int = 10
+                           ) -> pd.DataFrame:
+   """
+    Build ML-ready instances for each expedition: for each row in tabular_df,
+    map the peakid (or subpeakid) to its parent peak, extract weather data from
+    the parent-peak-specific daily CSV for the target date and n_context_days prior,
+    flatten into features, and include the target label.
+
+    Args:
+        tabular_df: DataFrame with ['PEAKID','SMTDATE','Target'] (SMTDATE datetime).
+        instances_root: Path to directory containing {parent_peakid}_daily.csv files.
+        n_context_days: Number of days of historical context before event_date.
+
+    Returns:
+        DataFrame: one row per expedition event with columns:
+          - 'PEAKID' (original code), 'parent_peakid', 'event_date', 'Target'
+          - weather features flattened as '<feature>_t-0', '<feature>_t-1', … '<feature>_t-n'
+    """
+   
+   # Maps all 8K peaks and sub-peaks to the same peakid to tie the tabular and weather data since we have the weather data of the main peak for itself and the sub-peaks
+   peakid_map = {
+      'ANN1': 'ANN1', # Annapurna 1 and its sub-peaks
+      'ANNM': 'ANN1',
+      'ANNE': 'ANN1',
+      'CHOY': 'CHOY', # Cho Oyu
+      'DHA1': 'DHA1', # Dhaulagiri I
+      'EVER': 'EVER', # Everest
+      'KANG': 'KANG', # Kangchenjunga and its sub-peaks
+      'KANC': 'KANG',
+      'KANS': 'KANG',
+      'YALU': 'KANG',
+      'YALW': 'KANG',
+      'LHOT': 'LHOT', # Lhotse and its sub-peaks
+      'LSHR': 'LHOT',
+      'LHOM': 'LHOT', 
+      'MAKA': 'MAKA', # Makalu 
+      'MANA': 'MANA', # Manaslu 
+   }
+
+   # Maps the peakids to the peak names to get the right weather files
+   peak_names = {
+      'ANN1': 'Annapurna-I',
+      'CHOY': 'Cho-Oyu',
+      'DHA1': 'Dhaulagiri-I',
+      'EVER': 'Everest',
+      'KANG': 'Kangchenjunga',
+      'LHOT': 'Lhotse',
+      'MAKA': 'Makalu',
+      'MANA': 'Manaslu'
+   }
+   
+   records = []
+
+   for _, row in tabular_df.iterrows():
+      raw_peak = row['PEAKID']
+      parent_peak = peakid_map.get(raw_peak, raw_peak)
+
+      mountain_name = peak_names.get(parent_peak)
+
+      if mountain_name is None:
+         print(f"Warning: No filename mapping for peak code {parent_peak}")
+         continue
+      
+
+      weather_file = instances_root / f"{mountain_name}.csv"
+      print(f"Weather file is {weather_file}\nDoes it exist? {weather_file.exists()}")
+
+      if not weather_file.exists():
+         print(f"Warning: Missing weather file {weather_file.name} for {parent_peak}")
+
+      event_date = row['SMTDATE']
+      target = row['Target']
+
+      # print(f"PeakId: {raw_peak}\nParent Peak: {parent_peak}\nEvent date: {event_date}\nTarget: {target}\n")
 
 # Fourth step, for each expedition in the tabular table (one row with peakid, date, success) pull the prior 10 daily rows from {mountain}.csv 
 # This will be the final ML ready table (one row per expedition with label and weather inputs). Next step will be to do the splits and dataloaders
@@ -317,8 +393,19 @@ processed_path = Path('data/era5_data/processed_csvs')
 # Merging the multiple weather .csv files into a single one for training feasibility
 # merge_weather_csvs("Dhaulagiri I")
 
-merged_instances = Path('data/era5_data/instances/merged_instances')
-merged_instances.mkdir(exist_ok=True, parents=True)
+merged_instances_path = Path('data/era5_data/instances/merged_instances')
+merged_instances_path.mkdir(exist_ok=True, parents=True)
 # Merging the two daily readings (00:00 and 18:00) into a single daily reading
 # merge_daily_instances(Path('data/era5_data/instances/raw_instances/Dhaulagiri-I.csv'),
 #                       Path('data/era5_data/instances/merged_instances/Dhaulagiri-I.csv'))
+
+# Building the instances where we look up expeditions on the tabular dataset, match on the date, and inject the peakid and target variable. Furthemore, we get 10 days of context in the instance as well
+tabular_data_path = Path('data/himalayas_data/processed_himalaya_data.csv')
+tabular_df = pd.read_csv(tabular_data_path, parse_dates=['SMTDATE'])
+build_event_instances(tabular_df, merged_instances_path, 10)
+# instances_df = build_event_instances(tabular_df, merged_instances_path, 10)
+# instances_output_path = Path('data/era5_data/instances')
+# instances_output_path.mkdir(parents=True, exist_ok=True)
+# instances_output_file = instances_output_path / 'instances_event_window.csv'
+# instances_df.to_csv(instances_output_file, index=False)
+# print(f"Wrote {len(instances_df)} event instances to {instances_output_file}")
