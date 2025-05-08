@@ -306,7 +306,7 @@ mapping = weather_mapping
 
 # Transformation of the .grib files into a more usable .csv format based on the variable mapping
 vars_to_keep = list(mapping.keys())
-process_grib_to_csv(era5_path, output_path, vars_to_keep)
+# process_grib_to_csv(era5_path, output_path, vars_to_keep)
 
 instances_path = Path('data/era5_data/instances')
 instances_path.mkdir(exist_ok=True, parents=True)
@@ -315,10 +315,10 @@ raw_instances_path.mkdir(exist_ok=True, parents=True)
 processed_path = Path('data/era5_data/processed_csvs')
 
 # Merging the multiple weather .csv files into a single one for training feasibility
-# merge_weather_csvs("Lhotse")
+# merge_weather_csvs("Dhaulagiri I")
 
 merged_instances = Path('data/era5_data/instances/merged_instances')
 merged_instances.mkdir(exist_ok=True, parents=True)
 # Merging the two daily readings (00:00 and 18:00) into a single daily reading
-# merge_daily_instances(Path('data/era5_data/instances/raw_instances/Annapurna-I.csv'),
-#                       Path('data/era5_data/instances/merged_instances/Annapurna-I.csv'))
+# merge_daily_instances(Path('data/era5_data/instances/raw_instances/Dhaulagiri-I.csv'),
+#                       Path('data/era5_data/instances/merged_instances/Dhaulagiri-I.csv'))
