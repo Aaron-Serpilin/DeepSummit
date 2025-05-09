@@ -399,7 +399,7 @@ output_path = Path('data/era5_data/processed_csvs')
 output_path.mkdir(exist_ok=True, parents=True)
 
 # Transform all the raw files to .grib for processing
-# file_to_grib(era5_path)
+file_to_grib(era5_path)
 
 # Obtain the variable mapping of the abbreviations pygrib uses internally
 # sample = next(era5_path.iterdir()) / (next(era5_path.iterdir()).glob("*.grib").__next__().name)
@@ -428,10 +428,10 @@ merged_instances_path.mkdir(exist_ok=True, parents=True)
 # Building the instances where we look up expeditions on the tabular dataset, match on the date, and inject the peakid and target variable. Furthemore, we get 10 days of context in the instance as well
 tabular_data_path = Path('data/himalayas_data/processed_himalaya_data.csv')
 tabular_df = pd.read_csv(tabular_data_path, parse_dates=['SMTDATE'])
-build_event_instances(tabular_df, merged_instances_path, 10)
-instances_df = build_event_instances(tabular_df, merged_instances_path, 10)
-instances_output_path = Path('data/era5_data/instances')
-instances_output_path.mkdir(parents=True, exist_ok=True)
-instances_output_file = instances_output_path / 'instances_event_window.csv'
-instances_df.to_csv(instances_output_file, index=False)
-print(f"Wrote {len(instances_df)} event instances to {instances_output_file}")
+# build_event_instances(tabular_df, merged_instances_path, 10)
+# instances_df = build_event_instances(tabular_df, merged_instances_path, 10)
+# instances_output_path = Path('data/era5_data/instances')
+# instances_output_path.mkdir(parents=True, exist_ok=True)
+# instances_output_file = instances_output_path / 'instances_event_window.csv'
+# instances_df.to_csv(instances_output_file, index=False)
+# print(f"Wrote {len(instances_df)} event instances to {instances_output_file}")

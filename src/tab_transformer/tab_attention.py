@@ -176,7 +176,7 @@ class TabAttention(nn.Module):
         flat_x = x.flatten(1)
         return self.mlp(flat_x)
     
-# The following transformer class corresponds to equations 1 and 2 that tackles intrasample relationships
+# The following transformer class corresponds to equations 1 and 2 that tackles intra-sample relationships
     
 class Transformer(nn.Module):
 
@@ -207,7 +207,7 @@ class Transformer(nn.Module):
             x = ff(x)
         return x
     
-# The following transformer class corresponds to equations 3 and 4 that tackle intersample relationships
+# The following transformer class corresponds to equations 3 and 4 that tackle inter-sample relationships
 
 class RowColTransformer(nn.Module):
     

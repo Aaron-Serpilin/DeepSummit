@@ -79,6 +79,11 @@ class sep_MLP(nn.Module):
     
 class GEGLU (nn.Module):
 
+    def __init__ (self, dim):
+
+        super().__init__()
+        self.dim = dim
+
     def forward(self, x):
         x, gates = x.chunk(2, dim = -1)
         return x * F.gelu(gates)
