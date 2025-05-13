@@ -1,4 +1,3 @@
-import xarray as xr
 import pygrib
 import glob
 import pandas as pd
@@ -288,7 +287,7 @@ def merge_daily_instances(input_csv: Path,
 
 def build_event_instances (tabular_df: pd.DataFrame,
                            instances_root: Path,
-                           n_context_days: int = 10
+                           n_context_days: int = 7
                            ) -> pd.DataFrame:
   """
   Build ML-ready instances for each expedition: for each row in tabular_df,
@@ -389,49 +388,47 @@ def build_event_instances (tabular_df: pd.DataFrame,
 
   return pd.DataFrame(records)
 
-# Fourth step, for each expedition in the tabular table (one row with peakid, date, success) pull the prior 10 daily rows from {mountain}.csv 
-# This will be the final ML ready table (one row per expedition with label and weather inputs). Next step will be to do the splits and dataloaders
+def load_era5_data () -> pd.DataFrame:
 
-############### 
+  era5_path = Path('data/era5_data/database_files')
+  output_path = Path('data/era5_data/processed_csvs')
+  output_path.mkdir(exist_ok=True, parents=True)
 
-era5_path = Path('data/era5_data/database_files')
-output_path = Path('data/era5_data/processed_csvs')
-output_path.mkdir(exist_ok=True, parents=True)
+  # 1. Transforming all the raw era5 files to .grib for processing
+  # file_to_grib(era5_path)
 
-# Transform all the raw files to .grib for processing
-# file_to_grib(era5_path)
+  # 2. Obtaining the corresponding variable mapping of the features and their internal pygrib abbreviations
+  # sample = next(era5_path.iterdir()) / (next(era5_path.iterdir()).glob("*.grib").__next__().name)
+  # mapping = get_variable_mapping(sample)
+  mapping = weather_mapping 
 
-# Obtain the variable mapping of the abbreviations pygrib uses internally
-# sample = next(era5_path.iterdir()) / (next(era5_path.iterdir()).glob("*.grib").__next__().name)
-# mapping = get_variable_mapping(sample)
-mapping = weather_mapping 
+  # 3. Transforming the .grib files into a more usable .csv file with the desired features
+  # vars_to_keep = list(mapping.keys())
+  # process_grib_to_csv(era5_path, output_path, vars_to_keep)
 
-# Transformation of the .grib files into a more usable .csv format based on the variable mapping
-vars_to_keep = list(mapping.keys())
-# process_grib_to_csv(era5_path, output_path, vars_to_keep)
+  instances_path = Path('data/era5_data/instances')
+  instances_path.mkdir(exist_ok=True, parents=True)
+  raw_instances_path = Path('data/era5_data/instances/raw_instances')
+  raw_instances_path.mkdir(exist_ok=True, parents=True)
+  processed_path = Path('data/era5_data/processed_csvs')
 
-instances_path = Path('data/era5_data/instances')
-instances_path.mkdir(exist_ok=True, parents=True)
-raw_instances_path = Path('data/era5_data/instances/raw_instances')
-raw_instances_path.mkdir(exist_ok=True, parents=True)
-processed_path = Path('data/era5_data/processed_csvs')
+  # 4. Merging the multiple weather .csv files that were batched in 5 years into a single one
+  merged_instances_path = Path('data/era5_data/instances/merged_instances')
+  merged_instances_path.mkdir(exist_ok=True, parents=True)
+  # merge_weather_csvs("Dhaulagiri I")
 
-# Merging the multiple weather .csv files into a single one for training feasibility
-# merge_weather_csvs("Dhaulagiri I")
 
-merged_instances_path = Path('data/era5_data/instances/merged_instances')
-merged_instances_path.mkdir(exist_ok=True, parents=True)
-# Merging the two daily readings (00:00 and 18:00) into a single daily reading
-# merge_daily_instances(Path('data/era5_data/instances/raw_instances/Dhaulagiri-I.csv'),
-#                       Path('data/era5_data/instances/merged_instances/Dhaulagiri-I.csv'))
+  # 5. Merging the two daily readings (00:00 and 18:00) into a single daily reading
+  # merge_daily_instances(Path('data/era5_data/instances/raw_instances/Dhaulagiri-I.csv'),
+  #                       Path('data/era5_data/instances/merged_instances/Dhaulagiri-I.csv'))
 
-# Building the instances where we look up expeditions on the tabular dataset, match on the date, and inject the peakid and target variable. Furthemore, we get 10 days of context in the instance as well
-tabular_data_path = Path('data/himalayas_data/processed_himalaya_data.csv')
-tabular_df = pd.read_csv(tabular_data_path, parse_dates=['SMTDATE'])
-build_event_instances(tabular_df, merged_instances_path, 10)
-instances_df = build_event_instances(tabular_df, merged_instances_path, 10)
-instances_output_path = Path('data/era5_data/instances')
-instances_output_path.mkdir(parents=True, exist_ok=True)
-instances_output_file = instances_output_path / 'instances_event_window.csv'
-instances_df.to_csv(instances_output_file, index=False)
-print(f"Wrote {len(instances_df)} event instances to {instances_output_file}")
+  # 6. Building the instances for our ML table where we look up expeditions on the tabular dataset, match on the date, and inject the peakid and target variable. Furthemore, we get 7 days of context in the instance as well
+  tabular_data_path = Path('data/himalayas_data/processed_himalaya_data.csv')
+  tabular_df = pd.read_csv(tabular_data_path, parse_dates=['SMTDATE'])
+  build_event_instances(tabular_df, merged_instances_path, 7)
+  instances_df = build_event_instances(tabular_df, merged_instances_path, 10)
+  instances_output_path = Path('data/era5_data/instances')
+  instances_output_path.mkdir(parents=True, exist_ok=True)
+  instances_output_file = instances_output_path / 'instances_event_window.csv'
+  instances_df.to_csv(instances_output_file, index=False)
+  print(f"Wrote {len(instances_df)} event instances to {instances_output_file}")
