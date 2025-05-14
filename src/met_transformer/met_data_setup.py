@@ -425,10 +425,7 @@ def load_era5_data () -> pd.DataFrame:
   # 6. Building the instances for our ML table where we look up expeditions on the tabular dataset, match on the date, and inject the peakid and target variable. Furthemore, we get 7 days of context in the instance as well
   tabular_data_path = Path('data/himalayas_data/processed_himalaya_data.csv')
   tabular_df = pd.read_csv(tabular_data_path, parse_dates=['SMTDATE'])
-  build_event_instances(tabular_df, merged_instances_path, 7)
-  instances_df = build_event_instances(tabular_df, merged_instances_path, 10)
-  instances_output_path = Path('data/era5_data/instances')
-  instances_output_path.mkdir(parents=True, exist_ok=True)
-  instances_output_file = instances_output_path / 'instances_event_window.csv'
-  instances_df.to_csv(instances_output_file, index=False)
-  print(f"Wrote {len(instances_df)} event instances to {instances_output_file}")
+  ml_table = build_event_instances(tabular_df, merged_instances_path, 7)
+  return ml_table
+ 
+print("hello world")
