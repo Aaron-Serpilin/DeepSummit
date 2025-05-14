@@ -18,105 +18,21 @@
 
 
 # In[3]:
-
+import torch
+# import torchvision
+# import matplotlib.pyplot as plt
+import pandas as pd
+# from torchinfo import summary
+from tqdm.auto import tqdm
+# from dbfread import DBF
+from torch.utils.tensorboard import SummaryWriter
+# import torchmetrics, mlxtend
+# import cdsapi
+# from einops import rearrange, repeat
+# import pygrib
 
 from torch import nn
 from torchvision import transforms
-
-try:
-    import torch
-    import torchvision
-    assert int(torch.__version__.split(".")[0]) >= 2, "torch version should be 2.+"
-    assert int(torchvision.__version__.split(".")[1]) >= 15, "torchvision version should be 0.15+"
-    print(f"torch version: {torch.__version__}")
-    print(f"torchvision version: {torchvision.__version__}")
-except:
-    print(f"[INFO] torch/torchvision versions not correct. Installing correct versions.")
-    get_ipython().system('pip3 install -U torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113')
-    import torch
-    import torchvision
-    print(f"torch version: {torch.__version__}")
-    print(f"torchvision version: {torchvision.__version__}")
-
-try:
-    import matplotlib.pyplot as plt
-except ImportError:
-    print("[INFO] Couldn't find matplotlib...installing it")
-    get_ipython().system('pip install -q matplotlib')
-    import matplotlib.pyplot as plt
-
-try:
-    from torchinfo import summary
-except:
-    print("[INFO] Couldn't find torchinfo... installing it")
-    get_ipython().system('pip install -q torchinfo')
-    from torchinfo import summary
-
-try:
-    from tqdm.auto import tqdm
-except:
-    print(f"[INFO] Couldnt't find tqdm... installing it ")
-    get_ipython().system('pip install tqdm')
-    from tqdm.auto import tqdm
-
-try:
-    from torchinfo import summary
-except ImportError:
-    print("[INFO] Couldn't find torchinfo... installing it")
-    get_ipython().system('pip install -q torchinfo')
-    from torchinfo import summary
-
-try:
-    from dbfread import DBF
-except ImportError:
-    print("[INFO] Coudln't find dbfread...installing it")
-    get_ipython().system('pip install -q dbfread')
-    from dbfread import DBF
-
-
-try:
-    from torch.utils.tensorboard import SummaryWriter
-except:
-    print("[INFO] Couldn't find tensorboard... installing it.")
-    get_ipython().system('pip install -q tensorboard')
-    from torch.utils.tensorboard import SummaryWriter
-
-try:
-    import torchmetrics, mlxtend
-    print(f"mlextend version: {mlxtend.__version__}")
-    assert int(mlxtend.__version__.split(".")[1]) >- 19
-except:
-    get_ipython().system('pip install -q torchmetrics -U mlxtend')
-    import torchmetrics, mlxtend
-    print(f"mlextend version: {mlxtend.__version__}")
-
-try:
-    import cdsapi
-except ImportError:
-    print("[INFO] Coudldn't find cdsapi...installing it.")
-    get_ipython().system('pip install -q cdsapi')
-    import cdsapi
-
-try:
-    import pandas as pd
-except ImportError:
-    print("[INFO] Couldn't find pandas... installing it")
-    get_ipython().system('pip install -q pandas')
-    import pandas as pd
-
-try:
-    from einops import rearrange, repeat
-except ImportError:
-    print("[INFO] Couldn't find einops... installing it")
-    get_ipython().system('pip install -q einops')
-    from einops import rearrange, repeat
-
-try:
-    import pygrib
-except ImportError:
-    print("[INFO] Couldn't find pygrib... installing it")
-    get_ipython().system('pip install -q pygrib')
-    import pygrib
 
 
 # In[3]:
