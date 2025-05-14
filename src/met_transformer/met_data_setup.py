@@ -360,10 +360,10 @@ def build_event_instances (tabular_df: pd.DataFrame,
     event_date = row['SMTDATE']
     target = row['Target']
 
-    # print(f"PeakId: {raw_peak}\nParent Peak: {parent_peak}\nEvent date: {event_date}\nTarget: {target}\n")
+    print(f"Loading weather for {parent_peak} from {weather_file}")
 
     # Loading the daily weather file
-    weather_df = pd.read_csv(weather_file, parse_dates=['date'], index_col='date')
+    weather_df = pd.read_csv(weather_file, engine="python", parse_dates=['date'], index_col='date')
 
     # Select the window [event date - n_context_days, event_date]
     start = event_date - pd.Timedelta(days=n_context_days)
@@ -400,7 +400,7 @@ def load_era5_data () -> pd.DataFrame:
   # 2. Obtaining the corresponding variable mapping of the features and their internal pygrib abbreviations
   # sample = next(era5_path.iterdir()) / (next(era5_path.iterdir()).glob("*.grib").__next__().name)
   # mapping = get_variable_mapping(sample)
-  mapping = weather_mapping 
+  # mapping = weather_mapping 
 
   # 3. Transforming the .grib files into a more usable .csv file with the desired features
   # vars_to_keep = list(mapping.keys())
@@ -410,7 +410,7 @@ def load_era5_data () -> pd.DataFrame:
   instances_path.mkdir(exist_ok=True, parents=True)
   raw_instances_path = Path('data/era5_data/instances/raw_instances')
   raw_instances_path.mkdir(exist_ok=True, parents=True)
-  processed_path = Path('data/era5_data/processed_csvs')
+  # processed_path = Path('data/era5_data/processed_csvs')
 
   # 4. Merging the multiple weather .csv files that were batched in 5 years into a single one
   merged_instances_path = Path('data/era5_data/instances/merged_instances')
@@ -427,5 +427,3 @@ def load_era5_data () -> pd.DataFrame:
   tabular_df = pd.read_csv(tabular_data_path, parse_dates=['SMTDATE'])
   ml_table = build_event_instances(tabular_df, merged_instances_path, 7)
   return ml_table
- 
-print("hello world")
