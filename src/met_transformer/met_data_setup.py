@@ -260,7 +260,6 @@ def merge_weather_csvs(mountain_name: str,
     merged.to_csv(out_file)
     print(f"Merged {len(df_list)} files for '{mountain_name}' into {out_file} ({len(merged)} rows)")
 
-# Second step, obtain a single instance per day. Days are split into two instances at 00:00 and 18:00. Merge into one since the features one has the other lacks
 # When merging all the .csv files together, there are two instances per day at 00:00 and 18:00 with complementary features. This function aims at merging these two instances into one, halving the amount of instances and making it more concise
 def merge_daily_instances(input_csv: Path,
                           output_csv: Path
@@ -283,11 +282,10 @@ def merge_daily_instances(input_csv: Path,
   df_daily.to_csv(output_csv)
   print(f"Merged {input_csv.name} into {output_csv.name}: {len(df)} -> {len(df_daily)} rows")
 
-# Third step, inject peakid as it is the same code mapping as the tabular dataset. Use the peak and sub-peak ids for this
-
 def build_event_instances (tabular_df: pd.DataFrame,
                            instances_root: Path,
-                           n_context_days: int = 7
+                           n_context_days: int = 7,
+                           max_events: int = None
                            ) -> pd.DataFrame:
   """
   Build ML-ready instances for each expedition: for each row in tabular_df,
@@ -299,6 +297,7 @@ def build_event_instances (tabular_df: pd.DataFrame,
       tabular_df: DataFrame with ['PEAKID','SMTDATE','Target'] (SMTDATE datetime).
       instances_root: Path to directory containing {parent_peakid}_daily.csv files.
       n_context_days: Number of days of historical context before event_date.
+      max_events: If set, process only the first max_events rows from tabular_df (for debugging).
 
   Returns:
       DataFrame: one row per expedition event with columns:
@@ -318,7 +317,6 @@ def build_event_instances (tabular_df: pd.DataFrame,
     'KANC': 'KANG',
     'KANS': 'KANG',
     'YALU': 'KANG',
-    'YALW': 'KANG',
     'LHOT': 'LHOT', # Lhotse and its sub-peaks
     'LSHR': 'LHOT',
     'LHOM': 'LHOT', 
@@ -338,92 +336,116 @@ def build_event_instances (tabular_df: pd.DataFrame,
     'MANA': 'Manaslu'
   }
   
-  records = []
+  # Loading all parents peak's weather DataFrames
+  weather_dfs = {}
 
-  # Traversal of the processed tabular data
-  for _, row in tabular_df.iterrows():
+  for parent_code, name in peak_names.items():
+    file_path = instances_root / f"{name}.csv"
+
+    if file_path.exists():
+      df = pd.read_csv(file_path, parse_dates=['date'], index_col='date', engine='python')
+      weather_dfs[parent_code] = df
+    else:
+      print(f"[Warning] Missing weather file for {parent_code}: {file_path.name}")
+   
+  # For debugging purposes to limit the number of instances created
+  if max_events is not None:
+    iter_df = tabular_df.head(max_events)
+  else:
+     iter_df = tabular_df
+
+  records = []
+ 
+  # Iterating through each tabular expedition row
+  for idx, row in iter_df.iterrows():
 
     raw_peak = row['PEAKID']
     parent_peak = peakid_map.get(raw_peak, raw_peak)
-    mountain_name = peak_names.get(parent_peak)
+    mountain_df = weather_dfs.get(parent_peak)
+    # print(f"Raw peak is {raw_peak}\nParent peak is {parent_peak}\nMountain df is {mountain_df}")
 
-    if mountain_name is None:
-      print(f"Warning: No filename mapping for peak code {parent_peak}")
+    if mountain_df is None:
+      print(f"[Skipping] No weather DataFrame loaded for peak {parent_peak}")
       continue
-    
-    weather_file = instances_root / f"{mountain_name}.csv"
-    # print(f"Weather file is {weather_file}\nDoes it exist? {weather_file.exists()}")
-
-    if not weather_file.exists():
-      print(f"Warning: Missing weather file {weather_file.name} for {parent_peak}")
 
     event_date = row['SMTDATE']
     target = row['Target']
 
-    print(f"Loading weather for {parent_peak} from {weather_file}")
+    # Context window extraction
+    start_date = event_date - pd.Timedelta(days=n_context_days)
+    window = mountain_df.loc[start_date:event_date]
 
-    # Loading the daily weather file
-    weather_df = pd.read_csv(weather_file, engine="python", parse_dates=['date'], index_col='date')
-
-    # Select the window [event date - n_context_days, event_date]
-    start = event_date - pd.Timedelta(days=n_context_days)
-    window = weather_df.loc[start:event_date]
-
+    # We use n_context_days + 1 given that the context is the day itself and the week before
     if len(window) != n_context_days + 1:
-      print(f"Warning: Incomplete window for {raw_peak} on {event_date}")
-      continue
+       print(f"[Skipping] Incomplete window for {raw_peak} on {event_date}: {len(window)} days")
+       continue
     
+    print(f"Window for {raw_peak} on {event_date} is {window}")
+
     record = {
-      'PEAKID': raw_peak,
-      'parent_peakid': parent_peak,
-      'event_date': event_date,
-      'Target': target
+       'PEAKID': raw_peak,
+       'parent_peakid': parent_peak,
+       'event_date': event_date,
+       'Target': target
     }
 
     for offset, date in enumerate(sorted(window.index, reverse=True)):
-       for feature, value in window.loc[date].items():
-          record[f"{feature}_t-{offset}"] = value
+      day_series = window.loc[date]
+
+      for feature, value in day_series.items():
+        record[f"{feature}_t-{offset}"] = value
 
     records.append(record)
-
+        
   return pd.DataFrame(records)
+       
+merged_instances_path = Path('data/era5_data/instances/merged_instances')
+tabular_data_path = Path('data/himalayas_data/processed_himalaya_data.csv')
+tabular_df = pd.read_csv(tabular_data_path, parse_dates=['SMTDATE'])
+test_df = build_event_instances(tabular_df, merged_instances_path, 7, 5)
+print(test_df.shape)
+print(test_df.head())
+output_path = Path('data/era5_data/instances')
+output_path.mkdir(parents=True, exist_ok=True)
+output_file = output_path / "test.csv"
+test_df.to_csv(output_file, index=False)
 
-def load_era5_data () -> pd.DataFrame:
+# def load_era5_data () -> pd.DataFrame:
 
-  era5_path = Path('data/era5_data/database_files')
-  output_path = Path('data/era5_data/processed_csvs')
-  output_path.mkdir(exist_ok=True, parents=True)
+#   era5_path = Path('data/era5_data/database_files')
+#   output_path = Path('data/era5_data/processed_csvs')
+#   output_path.mkdir(exist_ok=True, parents=True)
 
-  # 1. Transforming all the raw era5 files to .grib for processing
-  # file_to_grib(era5_path)
+#   # 1. Transforming all the raw era5 files to .grib for processing
+#   # file_to_grib(era5_path)
 
-  # 2. Obtaining the corresponding variable mapping of the features and their internal pygrib abbreviations
-  # sample = next(era5_path.iterdir()) / (next(era5_path.iterdir()).glob("*.grib").__next__().name)
-  # mapping = get_variable_mapping(sample)
-  # mapping = weather_mapping 
+#   # 2. Obtaining the corresponding variable mapping of the features and their internal pygrib abbreviations
+#   # sample = next(era5_path.iterdir()) / (next(era5_path.iterdir()).glob("*.grib").__next__().name)
+#   # mapping = get_variable_mapping(sample)
+#   # mapping = weather_mapping 
 
-  # 3. Transforming the .grib files into a more usable .csv file with the desired features
-  # vars_to_keep = list(mapping.keys())
-  # process_grib_to_csv(era5_path, output_path, vars_to_keep)
+#   # 3. Transforming the .grib files into a more usable .csv file with the desired features
+#   # vars_to_keep = list(mapping.keys())
+#   # process_grib_to_csv(era5_path, output_path, vars_to_keep)
 
-  instances_path = Path('data/era5_data/instances')
-  instances_path.mkdir(exist_ok=True, parents=True)
-  raw_instances_path = Path('data/era5_data/instances/raw_instances')
-  raw_instances_path.mkdir(exist_ok=True, parents=True)
-  # processed_path = Path('data/era5_data/processed_csvs')
+#   instances_path = Path('data/era5_data/instances')
+#   instances_path.mkdir(exist_ok=True, parents=True)
+#   raw_instances_path = Path('data/era5_data/instances/raw_instances')
+#   raw_instances_path.mkdir(exist_ok=True, parents=True)
+#   # processed_path = Path('data/era5_data/processed_csvs')
 
-  # 4. Merging the multiple weather .csv files that were batched in 5 years into a single one
-  merged_instances_path = Path('data/era5_data/instances/merged_instances')
-  merged_instances_path.mkdir(exist_ok=True, parents=True)
-  # merge_weather_csvs("Dhaulagiri I")
+#   # 4. Merging the multiple weather .csv files that were batched in 5 years into a single one
+#   merged_instances_path = Path('data/era5_data/instances/merged_instances')
+#   merged_instances_path.mkdir(exist_ok=True, parents=True)
+#   # merge_weather_csvs("Dhaulagiri I")
 
 
-  # 5. Merging the two daily readings (00:00 and 18:00) into a single daily reading
-  # merge_daily_instances(Path('data/era5_data/instances/raw_instances/Dhaulagiri-I.csv'),
-  #                       Path('data/era5_data/instances/merged_instances/Dhaulagiri-I.csv'))
+#   # 5. Merging the two daily readings (00:00 and 18:00) into a single daily reading
+#   # merge_daily_instances(Path('data/era5_data/instances/raw_instances/Dhaulagiri-I.csv'),
+#   #                       Path('data/era5_data/instances/merged_instances/Dhaulagiri-I.csv'))
 
-  # 6. Building the instances for our ML table where we look up expeditions on the tabular dataset, match on the date, and inject the peakid and target variable. Furthemore, we get 7 days of context in the instance as well
-  tabular_data_path = Path('data/himalayas_data/processed_himalaya_data.csv')
-  tabular_df = pd.read_csv(tabular_data_path, parse_dates=['SMTDATE'])
-  ml_table = build_event_instances(tabular_df, merged_instances_path, 7)
-  return ml_table
+#   # 6. Building the instances for our ML table where we look up expeditions on the tabular dataset, match on the date, and inject the peakid and target variable. Furthemore, we get 7 days of context in the instance as well
+#   tabular_data_path = Path('data/himalayas_data/processed_himalaya_data.csv')
+#   tabular_df = pd.read_csv(tabular_data_path, parse_dates=['SMTDATE'])
+#   ml_table = build_event_instances(tabular_df, merged_instances_path, 7)
+#   return ml_table
