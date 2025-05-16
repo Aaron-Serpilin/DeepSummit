@@ -62,7 +62,7 @@ weather_variable_list = [
     "total_column_snow_water",
 ]
 
-# For convenience instead of running get_variable_mapping each time which takes ~3 minutes
+# For convenience instead of running get_variable_mapping each time which takes ~3 minutes on CPU
 weather_mapping = {
     '10u':   '10 metre U wind component',
     '10v':   '10 metre V wind component',
@@ -399,53 +399,89 @@ def build_event_instances (tabular_df: pd.DataFrame,
         
   return pd.DataFrame(records)
        
-merged_instances_path = Path('data/era5_data/instances/merged_instances')
-tabular_data_path = Path('data/himalayas_data/processed_himalaya_data.csv')
-tabular_df = pd.read_csv(tabular_data_path, parse_dates=['SMTDATE'])
-test_df = build_event_instances(tabular_df, merged_instances_path, 7, 5)
-print(test_df.shape)
-print(test_df.head())
-output_path = Path('data/era5_data/instances')
-output_path.mkdir(parents=True, exist_ok=True)
-output_file = output_path / "test.csv"
-test_df.to_csv(output_file, index=False)
+def load_era5_data (do_file_to_grib: bool = False,
+                    do_variable_mapping: bool = False,
+                    do_process_grib_to_csv: bool = False,
+                    do_merge_weather: bool = False,
+                    do_merge_daily: bool = False,
+                    do_build_instances: bool = False,
+                    mountains: list[str] = None,
+                    n_context_days: int = 7
+                    ) -> pd.DataFrame | None:
 
-# def load_era5_data () -> pd.DataFrame:
+  """
 
-#   era5_path = Path('data/era5_data/database_files')
-#   output_path = Path('data/era5_data/processed_csvs')
-#   output_path.mkdir(exist_ok=True, parents=True)
+  Carries out the entire ERA5 preparation, and build the corresponding ML-instance .csv file.
+  This function however does not request the data from the API directly as that is carried out in the get_data.py file.
 
-#   # 1. Transforming all the raw era5 files to .grib for processing
-#   # file_to_grib(era5_path)
+  Steps (controlled by flags):
+    1. file_to_grib: rename raw files to .grib
+    2. variable_mapping: inspect one .grib for shortName->name mapping to get the relevant features and features that pygrib uses internally
+    3. process_grib_to_csv: extract vars to .csv files per each 5-year batch
+    4. merge_weather: conact the 5-year .csv batches into a full time-series per mountain
+    5. merge_daily: collapses the 00:00/18:00 instances into a single daily row
+    6. build_instances: join with the tabular dataset .csv, and extract n_context_days+1 window per event and flatten
 
-#   # 2. Obtaining the corresponding variable mapping of the features and their internal pygrib abbreviations
-#   # sample = next(era5_path.iterdir()) / (next(era5_path.iterdir()).glob("*.grib").__next__().name)
-#   # mapping = get_variable_mapping(sample)
-#   # mapping = weather_mapping 
+  Args:
+    do_file_to_grib:           run step 1
+    do_variable_mapping:       run step 2
+    do_process_grib_to_csv:    run step 3
+    do_merge_weather:          run step 4
+    do_merge_daily:            run step 5
+    do_build_instances:        run step 6
+    mountains:                 list of mountain CSV names (e.g. ["Everest", …]); defaults to all eight peaks
+    n_context_days:            days of history before each event (default 7)
 
-#   # 3. Transforming the .grib files into a more usable .csv file with the desired features
-#   # vars_to_keep = list(mapping.keys())
-#   # process_grib_to_csv(era5_path, output_path, vars_to_keep)
+  Returns:
+    DataFrame of ML-ready instances (if do_build_instances), else None.
 
-#   instances_path = Path('data/era5_data/instances')
-#   instances_path.mkdir(exist_ok=True, parents=True)
-#   raw_instances_path = Path('data/era5_data/instances/raw_instances')
-#   raw_instances_path.mkdir(exist_ok=True, parents=True)
-#   # processed_path = Path('data/era5_data/processed_csvs')
+  """
 
-#   # 4. Merging the multiple weather .csv files that were batched in 5 years into a single one
-#   merged_instances_path = Path('data/era5_data/instances/merged_instances')
-#   merged_instances_path.mkdir(exist_ok=True, parents=True)
-#   # merge_weather_csvs("Dhaulagiri I")
+  era5_root = Path('data/era5_data/database_files')
+  processed_path = Path('data/era5_data/processed_csvs')
+  raw_instances_path = Path('data/era5_data/instances/raw_instances')
+  merged_instances_path = Path('data/era5_data/instances/merged_instances')
 
+  era5_root.mkdir(exist_ok=True, parents=True)
+  processed_path.mkdir(exist_ok=True, parents=True)
+  raw_instances_path.mkdir(exist_ok=True, parents=True)
+  merged_instances_path.mkdir(exist_ok=True, parents=True)
 
-#   # 5. Merging the two daily readings (00:00 and 18:00) into a single daily reading
-#   # merge_daily_instances(Path('data/era5_data/instances/raw_instances/Dhaulagiri-I.csv'),
-#   #                       Path('data/era5_data/instances/merged_instances/Dhaulagiri-I.csv'))
+  if mountains is None:
+     mountains = ["Annapurna-I", "Cho-Oyu", "Dhaulagiri-I", "Everest", "Kangchenjunga", "Lhotse", "Makalu", "Manaslu"]
+    
+  # Step 1
+  if do_file_to_grib:
+     file_to_grib(era5_root)
 
-#   # 6. Building the instances for our ML table where we look up expeditions on the tabular dataset, match on the date, and inject the peakid and target variable. Furthemore, we get 7 days of context in the instance as well
-#   tabular_data_path = Path('data/himalayas_data/processed_himalaya_data.csv')
-#   tabular_df = pd.read_csv(tabular_data_path, parse_dates=['SMTDATE'])
-#   ml_table = build_event_instances(tabular_df, merged_instances_path, 7)
-#   return ml_table
+  # Step 2
+  if do_variable_mapping:
+     sample = next(era5_root.iterdir()) / next(next(era5_root.iterdir()).glob("*.grib")).name
+     mapping = get_variable_mapping(sample)
+  else: 
+     mapping = weather_mapping
+
+  # Step 3
+  if do_process_grib_to_csv:
+     vars_to_keep = list(mapping.keys())
+     process_grib_to_csv(era5_root, processed_path, vars_to_keep)
+
+  # Step 4
+  if do_merge_weather:
+     for mountain in  mountains:
+        merge_weather_csvs(mountain)
+
+  # Step 5
+  if do_merge_daily: 
+     for mountain in mountains:
+        raw_csv = raw_instances_path / f"{mountain}.csv"
+        daily_csv = merged_instances_path / f"{mountain}.csv"
+        merge_daily_instances(raw_csv, daily_csv)
+
+  # Step 6
+  if do_build_instances:
+     tabular_data_path = Path('data/himalayas_data/processed_himalaya_data.csv')
+     tabular_df = pd.read_csv(tabular_data_path, parse_dates=['SMTDATE'])
+     return build_event_instances(tabular_df, era5_root, n_context_days)
+  
+  return None
