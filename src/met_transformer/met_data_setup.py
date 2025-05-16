@@ -380,7 +380,7 @@ def build_event_instances (tabular_df: pd.DataFrame,
        print(f"[Skipping] Incomplete window for {raw_peak} on {event_date}: {len(window)} days")
        continue
     
-    print(f"Window for {raw_peak} on {event_date} is {window}")
+    # print(f"Window for {raw_peak} on {event_date} is {window}")
 
     record = {
        'PEAKID': raw_peak,
@@ -437,10 +437,10 @@ def load_era5_data (do_file_to_grib: bool = False,
 
   """
 
-  era5_root = Path('data/era5_data/database_files')
-  processed_path = Path('data/era5_data/processed_csvs')
-  raw_instances_path = Path('data/era5_data/instances/raw_instances')
-  merged_instances_path = Path('data/era5_data/instances/merged_instances')
+  era5_root = Path('data/era5_data/database_files/raw_files')
+  processed_path = Path('data/era5_data/database_files/processed_csvs')
+  raw_instances_path = Path('data/era5_data/database_files/instances/raw_instances')
+  merged_instances_path = Path('data/era5_data/database_files/instances/merged_instances')
 
   era5_root.mkdir(exist_ok=True, parents=True)
   processed_path.mkdir(exist_ok=True, parents=True)
@@ -469,7 +469,9 @@ def load_era5_data (do_file_to_grib: bool = False,
   # Step 4
   if do_merge_weather:
      for mountain in  mountains:
-        merge_weather_csvs(mountain)
+        merge_weather_csvs(mountain,
+                           processed_path,
+                           raw_instances_path)
 
   # Step 5
   if do_merge_daily: 
@@ -482,6 +484,6 @@ def load_era5_data (do_file_to_grib: bool = False,
   if do_build_instances:
      tabular_data_path = Path('data/himalayas_data/processed_himalaya_data.csv')
      tabular_df = pd.read_csv(tabular_data_path, parse_dates=['SMTDATE'])
-     return build_event_instances(tabular_df, era5_root, n_context_days)
+     return build_event_instances(tabular_df, merged_instances_path, n_context_days)
   
   return None
