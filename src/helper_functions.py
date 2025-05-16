@@ -82,9 +82,9 @@ def create_dataloaders (train_file: Path,
                         test_file: Path, 
                         cat_cols: List,
                         continuous_mean_std: List[Tuple[float, float]],
-                        target_column: str= 'Target',
-                        batch_size: int=32, 
-                        num_workers: int=os.cpu_count()):
+                        target_column: str = 'Target',
+                        batch_size: int = 32, 
+                        num_workers: int = os.cpu_count()):
     
     """
     Creates the training, validation, and testing DataLoaders from CSV files using TabularDataset. 
