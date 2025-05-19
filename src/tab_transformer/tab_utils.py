@@ -57,7 +57,7 @@ class TabularDataset(Dataset):
         if task == 'clf':
             self.y = self.target.values
         else: 
-            self.y = self.tarrget.values.astype(np.float32)
+            self.y = self.target.values.astype(np.float32)
 
         # [ cls ] token 
         self.cls = np.zeros((len(self.y), 1), dtype=int)
