@@ -72,7 +72,7 @@ class TabularDataset(Dataset):
     def __len__ (self):
         return len(self.y)
     
-    def __getitem__ (self, idx):
+    def __getitem__ (self, idx: int):
 
         """
         Returns:
