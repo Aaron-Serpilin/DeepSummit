@@ -63,10 +63,15 @@ class WeatherDataset (Dataset):
         self.num_days = len(self.offsets)
         self.num_feats_per_day = len(self.base_features)
 
-        # Stats calculation for normalization
-        stats = self.feature_df.agg(["mean", "std"])
-        self.means = stats.loc["mean"].values.astype(np.float32)
-        self.stds = stats.loc["std"].values.astype(np.float32)
+        # Normalization
+        if continuous_mean_std is None:
+            stats = self.feature_df.agg(["mean", "std"])
+            means = stats.loc["mean"].values.astype(np.float32)
+            stds = stats.loc["std"].value.astype(np.float32)
+            continuous_mean_std = list(zip(means, stds))
+
+        self.means = np.array([mean for mean, std in continuous_mean_std], dtype=np.float32)
+        self.stds = np.array([std for mean, std in continuous_mean_std], dtype=np.float32)
         self.stds[self.stds == 0] = 1.0 # we do this to avoid division by 0 problems
 
         # Mask to signal priorities/ignored features
@@ -98,12 +103,12 @@ class WeatherDataset (Dataset):
 
         row = self.data.iloc[idx]
 
-        # Flat weather vector reshaped to [num_days, num_feats_per_day]
+        # Flat weather vector reshaped to [num_days, num_feats_per_day] 
         flat = row[self.feature_cols].values.astype(np.float32)
 
         # Normalization
-        print(f"means is {self.means}\nstds is {self.stds}\n")
         flat = (flat - self.means) / self.stds
+        
         # Reshaping into (days, feats)
         X_days = flat.reshape(self.num_days, self.num_feats_per_day)
 

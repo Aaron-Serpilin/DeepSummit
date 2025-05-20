@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import requests
-from typing import Type, List, Tuple
+from typing import Type, List, Tuple, Dict, Any
 
 # PyTorch Imports
 import torch
@@ -77,14 +77,14 @@ def set_data_splits (X,
     print(f"[INFO] Validation set saved to: {val_file}")
     print(f"[INFO] Test set saved to: {test_file}")
 
-def create_dataloaders (train_file: Path, 
+def create_dataloaders (dataset_class: Type,
+                        train_file: Path, 
                         val_file: Path, 
                         test_file: Path, 
-                        cat_cols: List,
-                        continuous_mean_std: List[Tuple[float, float]],
-                        target_column: str = 'Target',
+                        num_workers: int = os.cpu_count(),
                         batch_size: int = 32, 
-                        num_workers: int = os.cpu_count()):
+                        dataset_kwargs: Dict[str, Any] = None # any extra args for the Dataset
+                        ) -> Tuple[DataLoader, DataLoader, DataLoader]:
     
     """
     Creates the training, validation, and testing DataLoaders from CSV files using TabularDataset. 
@@ -93,25 +93,29 @@ def create_dataloaders (train_file: Path,
     into Tabular Datasets and then into PyTorch DataLoaders.
 
     Args:
+        dataset_class (Type): Class of Dataset to instantiate
         train_file (str): Path to the training CSV file.
         val_file (str): Path to the validation CSV file.
         test_file (str): Path to the testing CSV file.
-        cat_cols (list): List of categorical column names.
-        continuous_mean_std: List of (mean, std) tuples for continuous features.
-        target_column (str): Name of the target column.
         batch_size (int): Batch size for DataLoaders.
         num_workers (int): Number of worker processes to use for data loading.
+        kwargs: Dict[str, Any]: Dictionary of keyword args to pass to the Dataset constructor. These include the following:
+            continuous_mean_std: List of (mean, std) tuples for continuous features.
+            target_column (str): Name of the target column.
+            cat_cols (list): List of categorical column names.
     
     Returns:
         A tuple (train_dataloader, val_dataloader, test_dataloader).
     """
 
-    train_data = TabularDataset(csv_file=Path(train_file), target_column=target_column, cat_cols=cat_cols, task='clf', continuous_mean_std=continuous_mean_std)
-    val_data = TabularDataset(csv_file=Path(val_file), target_column=target_column, cat_cols=cat_cols, task='clf', continuous_mean_std=continuous_mean_std)
-    test_data = TabularDataset(csv_file=Path(test_file), target_column=target_column, cat_cols=cat_cols, task='clf', continuous_mean_std=continuous_mean_std)
+    dataset_kwargs = dataset_kwargs or {}
+
+    train_dataset = dataset_class(csv_file=Path(train_file), **dataset_kwargs)
+    val_dataset = dataset_class(csv_file=Path(val_file), **dataset_kwargs)
+    test_dataset = dataset_class(csv_file=Path(test_file), **dataset_kwargs)
     
     train_dataloader = DataLoader(
-      train_data, 
+      train_dataset, 
       batch_size=batch_size,
       shuffle=True,
       num_workers=num_workers,
@@ -119,7 +123,7 @@ def create_dataloaders (train_file: Path,
     )
     
     val_dataloader = DataLoader(
-        val_data, 
+        val_dataset, 
         batch_size=batch_size,
         shuffle=False,
         num_workers=num_workers,
@@ -127,7 +131,7 @@ def create_dataloaders (train_file: Path,
     )
 
     test_dataloader = DataLoader(
-        test_data,
+        test_dataset,
         batch_size=batch_size,
         shuffle=False,
         num_workers=num_workers,

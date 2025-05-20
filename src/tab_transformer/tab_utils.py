@@ -11,7 +11,6 @@ class TabularDataset(Dataset):
                 csv_file:Path,
                 target_column:str,
                 cat_cols:list[str], 
-                task:str='clf',
                 continuous_mean_std:List[Tuple[float, float]]=None):
         
         """
@@ -35,39 +34,45 @@ class TabularDataset(Dataset):
         for col in cat_cols:
             self.data[col] = self.data[col].astype('category').cat.codes
 
-        self.features = self.data.drop(columns=[self.target_column])
+        self.features_df = self.data.drop(columns=[self.target_column])
+        self.y = self.target.values
         self.target = self.data[self.target_column]
-
+    
         # Mask of ones with the same shape as the features to signal prioritized/ignored features
         self.mask = np.ones(self.features.shape, dtype=np.int64)
 
         # While you can access columns by name in DataFrames, NumPy only has integer indices
         cat_indices = [self.data.columns.get_loc(col) for col in cat_cols if col != target_column]
-        X_np = self.features.values
+        X_np = self.features_df.values
+        all_columns = list(self.features_df.columns)
         all_indices = set(range(X_np.shape[1]))
-        con_indices = sorted(list(all_indices - set(cat_indices)))
+        cont_indices = sorted(list(all_indices - set(cat_indices)))
 
         # Categorical (X1) and Continuous (X2) extraction
         self.X1 = X_np[:, cat_indices].copy().astype(np.int64)
         self.X2 = X_np[:, con_indices].copy().astype(np.float32)
+
         # Masks
         self.X1_mask = self.mask[:, cat_indices].copy().astype(np.int64)
-        self.X2_mask = self.mask[:, con_indices].copy().astype(np.int64)
-   
-        if task == 'clf':
-            self.y = self.target.values
-        else: 
-            self.y = self.target.values.astype(np.float32)
+        self.X2_mask = self.mask[:, cont_indices].copy().astype(np.int64)
+
+        # Normalization
+        if continuous_mean_std is None:
+            cont_columns = [all_columns[i] for i in cont_indices]
+            stats = self.features_df[cont_columns].agg(["mean", "std"])
+            means = stats.loc["mean"].values.astype(np.float32)
+            stds = stats.loc["std"].values.astype(np.float32)
+            continuous_mean_std = list(zip(means, stds))
+
+        self.means = np.array([mean for mean, std in continuous_mean_std], dtype=np.float32)
+        self.stds = np.array([std for mean, std in continuous_mean_std], dtype=np.float32)
+        self.stds[self.stds == 0] = 1.0 # we do this to avoid division by 0 problems
+
+        self.X2 = (self.XS - self.means) / self.stds
 
         # [ cls ] token 
         self.cls = np.zeros((len(self.y), 1), dtype=int)
         self.cls_mask = np.ones((len(self.y), 1), dtype=int)
-
-        # Normalization
-        if continuous_mean_std is not None:
-            means = np.array([mean for mean, std in continuous_mean_std], dtype=np.float32)
-            stds = np.array([std for mean, std in continuous_mean_std], dtype=np.float32)
-            self.X2 = (self.X2 - means) / stds
 
     def __len__ (self):
         return len(self.y)
