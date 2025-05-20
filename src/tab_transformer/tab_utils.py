@@ -35,11 +35,11 @@ class TabularDataset(Dataset):
             self.data[col] = self.data[col].astype('category').cat.codes
 
         self.features_df = self.data.drop(columns=[self.target_column])
-        self.y = self.target.values
         self.target = self.data[self.target_column]
+        self.y = self.target.values
     
         # Mask of ones with the same shape as the features to signal prioritized/ignored features
-        self.mask = np.ones(self.features.shape, dtype=np.int64)
+        self.mask = np.ones(self.features_df.shape, dtype=np.int64)
 
         # While you can access columns by name in DataFrames, NumPy only has integer indices
         cat_indices = [self.data.columns.get_loc(col) for col in cat_cols if col != target_column]
@@ -50,7 +50,7 @@ class TabularDataset(Dataset):
 
         # Categorical (X1) and Continuous (X2) extraction
         self.X1 = X_np[:, cat_indices].copy().astype(np.int64)
-        self.X2 = X_np[:, con_indices].copy().astype(np.float32)
+        self.X2 = X_np[:, cont_indices].copy().astype(np.float32)
 
         # Masks
         self.X1_mask = self.mask[:, cat_indices].copy().astype(np.int64)
@@ -68,7 +68,7 @@ class TabularDataset(Dataset):
         self.stds = np.array([std for mean, std in continuous_mean_std], dtype=np.float32)
         self.stds[self.stds == 0] = 1.0 # we do this to avoid division by 0 problems
 
-        self.X2 = (self.XS - self.means) / self.stds
+        self.X2 = (self.X2 - self.means) / self.stds
 
         # [ cls ] token 
         self.cls = np.zeros((len(self.y), 1), dtype=int)

@@ -39,7 +39,7 @@ class WeatherDataset (Dataset):
         excluded_columns = set(metadata_cols + [target_column])
 
         # Features DataFrame and column list
-        self.feature_df = self.data.drop(columns=excluded_columns) # DataFrame containing all of the values for every flattened feature column
+        self.feature_df = self.data.drop(columns=excluded_columns, errors="ignore") # DataFrame containing all of the values for every flattened feature column
         self.num_features = len(self.feature_df)
         self.feature_cols = list(self.feature_df.columns) # flattened column names with the the feature and time offset
 
@@ -67,7 +67,7 @@ class WeatherDataset (Dataset):
         if continuous_mean_std is None:
             stats = self.feature_df.agg(["mean", "std"])
             means = stats.loc["mean"].values.astype(np.float32)
-            stds = stats.loc["std"].value.astype(np.float32)
+            stds = stats.loc["std"].values.astype(np.float32)
             continuous_mean_std = list(zip(means, stds))
 
         self.means = np.array([mean for mean, std in continuous_mean_std], dtype=np.float32)
@@ -108,7 +108,7 @@ class WeatherDataset (Dataset):
 
         # Normalization
         flat = (flat - self.means) / self.stds
-        
+
         # Reshaping into (days, feats)
         X_days = flat.reshape(self.num_days, self.num_feats_per_day)
 
@@ -128,6 +128,7 @@ class WeatherDataset (Dataset):
         # Intra sample mask
         window_masks = self.window_masks
 
+        # Convert arrays to torch tensors
         X_tensor = torch.tensor(X)
         mask_tensor = torch.tensor(mask, dtype=torch.long)
         target_tensor = torch.tensor(y)
@@ -135,7 +136,7 @@ class WeatherDataset (Dataset):
 
         return X_tensor, mask_tensor, target_tensor, window_mask_tensor
 
-test_path = Path("data/era5_data/era5_data.csv")
-test = WeatherDataset(csv_file=test_path, target_column='Target')
-X, mask, y, window_mask = test[5]
-print(f"X is {X}\nmask is: {mask}\ny is: {y}\nwindow_mask is: {window_mask}\n")
+# test_path = Path("data/era5_data/era5_data.csv")
+# test = WeatherDataset(csv_file=test_path, target_column='Target')
+# X, mask, y, window_mask = test[5]
+# print(f"X is {X}\nmask is: {mask}\ny is: {y}\nwindow_mask is: {window_mask}\n")

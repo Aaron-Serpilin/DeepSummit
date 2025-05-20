@@ -108,7 +108,7 @@ def load_himalayan_data () -> Tuple[DataLoader, DataLoader, DataLoader]:
     continuous_mean_std = list(zip(continuous_means, continuous_stds))
 
     train_dataloader, val_dataloader, test_dataloader = create_dataloaders(
-        dataset=TabularDataset,
+        dataset_class=TabularDataset,
         train_file=himalayan_train_file,
         val_file=himalayan_val_file,
         test_file=himalayan_test_file,
