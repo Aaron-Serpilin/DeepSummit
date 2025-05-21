@@ -114,6 +114,8 @@ def create_dataloaders (dataset_class: Type,
     val_dataset = dataset_class(csv_file=Path(val_file), **dataset_kwargs)
     test_dataset = dataset_class(csv_file=Path(test_file), **dataset_kwargs)
     
+    # When using custom Dataset classes such as Tabular/WeatherDataset, it is important to use DataLoaders
+    # when training/evaluating since every time we fetch a sample, it triggers __getitem__ and the subsequent normalization
     train_dataloader = DataLoader(
       train_dataset, 
       batch_size=batch_size,

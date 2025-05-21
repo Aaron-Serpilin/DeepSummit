@@ -135,8 +135,3 @@ class WeatherDataset (Dataset):
         window_mask_tensor = torch.tensor(window_masks)
 
         return X_tensor, mask_tensor, target_tensor, window_mask_tensor
-
-# test_path = Path("data/era5_data/era5_data.csv")
-# test = WeatherDataset(csv_file=test_path, target_column='Target')
-# X, mask, y, window_mask = test[5]
-# print(f"X is {X}\nmask is: {mask}\ny is: {y}\nwindow_mask is: {window_mask}\n")

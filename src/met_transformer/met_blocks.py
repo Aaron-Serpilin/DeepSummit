@@ -1,5 +1,11 @@
 import torch
 from torch import nn
+from xformers.ops import memory_efficient_attention, unbind
+from src.tab_transformer.tab_blocks import MLP
+from src.met_transformer.met_attention import Attention
+
+def modulate (x, shift, scale):
+    return x * (1 + scale.unsqueeze(1)) + shift.unsqueeze(1)
 
 class Swish (nn.Module):
 
@@ -42,3 +48,45 @@ class GLU (nn.Module):
     def forward(self, x):
         outputs, gate = x.chunk(2, dim=self.dim)
         return outputs * gate.sigmoid()
+        
+class Block (nn.Module):
+
+    def __init__(self,
+                 hidden_size: int,
+                 num_heads: int,
+                 mlp_ratio=4.0,
+                 **block_kwargs):
+        super().__init__()
+
+        # Pre-attention norm
+        self.norm1 = nn.LayerNorm(hidden_size, elementwise_affine=False, eps=1e-6)
+        # Attention Wrapper
+        self.attn = Attention(hidden_size, num_heads=num_heads, qkv_bias=True, **block_kwargs)
+        # Pre-MLP norm
+        self.norm2 = nn.LayerNorm(hidden_size, elementwise_affine=False, eps=1e-6)
+        # Two-layer MLP
+        mlp_hidden_dim = int(hidden_size * mlp_ratio)
+        self.mlp = MLP(dims=[hidden_size, mlp_hidden_dim, hidden_size], act=nn.GELU())
+
+        self.adaLN_modulation = nn.Sequential(
+            nn.SiLU(),
+            nn.Linear(hidden_size, 6 * hidden_size, bias=True)
+        )
+
+    def forward(self, x, c):
+
+        shift_msa, scale_msa, gate_msa, shift_mlp, scale_mlp, gate_mlp = self.adaLN_modulation(c).chunk(6, dim=1)
+
+        # Attention sublayer
+        y = self.norm1(x)
+        y = modulate(y, shift_msa, scale_msa)
+        y = self.attn(y)
+        x = x + gate_msa.unsqueeze(1) * y
+
+        # MLP sublayer
+        z = self.norm2(x)
+        z = modulate(z, shift_mlp, scale_mlp)
+        z = self.mlp(z)
+        x = x + gate_mlp.unsqueeze(1) * z
+        
+        return x
