@@ -2,6 +2,8 @@ import torch
 from torch import nn
 from src.met_transformer.met_blocks import MLP
 from src.met_transformer.met_attention import Attention
+from typing import List, Dict
+import re
 
 ### Helpers ###
 
@@ -153,7 +155,7 @@ class FinalLayer (nn.Module):
         patch_size (int): spatial patch dimension.
         out_channels (int): number of output channels per patch.
     """
-    
+
     def __init__ (self,
                   hidden_size: int,
                   patch_size: int,
@@ -174,3 +176,80 @@ class FinalLayer (nn.Module):
         x = modulate(self.norm_final(x), shift, scale)
         x = self.linear(x)
         return x
+    
+class FeaturedWeightedEmbedding (nn.Module):
+
+    """
+    Embeds a sequence of feature vectors with learnable or fixed feature-wise weights.
+    Amongst the list of weather variables, some have a more significant role in determining summit success.
+    Therefore, said features are assigned a more dominant weight while still accounting for all factors. 
+
+    Furthermore, the class also applies a temporal decay based on each feature's day-offset suffix
+    as the weather of the more proximate days has a greater impact on the weather of the predicted day. 
+
+    Args:
+        feature_names (List[str]): Names of each input feature (length = num_features).
+        embed_dim (int): Dimension of the output embeddings.
+        init_weights (Optional[Dict[str, float]]): Optional mapping from feature_name to initial weight.
+            Features not in this dict default to weight 1.0.
+        decay_rate (float): Exponential decay rate per day offset; weight *= exp(-decay_rate * offset).
+    """
+
+    def __init__(self,
+                 feature_names: List[str],
+                 embed_dim: int,
+                 init_weights: Dict[str, float] = None,
+                 decay_rate: float = 0.2
+                 ):
+        
+        super().__init__()
+        self.feature_names = feature_names
+        self.num_features = len(feature_names)
+        self.embed_dim = embed_dim
+
+        # Separating the different components from the data
+        self.cls_token = 0
+        self.mask = 0
+        self.X = 0
+        self.target = 0
+        self.window_mask = 0
+        self.features = 0
+
+        weight_tensor = torch.ones(self.num_features, dtype=torch.float32)
+
+        # Initial base weights
+        if init_weights:
+            for i, name in enumerate(feature_names):
+                if name in init_weights:
+                    weight_tensor[i] = init_weights[name]
+
+        # Temporal decay based on day-offset in the feature name
+        offsets = []
+        pattern = re.compile(r"_t-(\d+)$")
+
+        for name in feature_names:
+            m = pattern.search(name)
+            offset = int(m.group(1)) if m else 0
+            offsets.append(offset)
+        offsets = torch.tensor(offsets, dtype=torch.float32)
+        decay = torch.exp(-decay_rate * offsets)
+        weight_tensor *= decay
+
+        # We initialize learnable per-feature weights
+        self.feature_weights = nn.Parameter(weight_tensor, requires_grad=True)     
+
+        # Linear projection from weighted features to embedding dimension
+        self.proj = nn.Linear(self.num_features, embed_dim)
+
+    def forward (self,
+                 x: torch.Tensor
+                 ) -> torch.Tensor:
+        
+        # Scale features by learned weights
+        x_weighted = x * self.feature_weights.unsqueeze(0).unsqueeze(0)
+
+        # Project to embedding space
+        embeddings = self.proj(x_weighted)
+        return embeddings
+
+
