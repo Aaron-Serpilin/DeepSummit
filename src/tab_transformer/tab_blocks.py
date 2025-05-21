@@ -14,6 +14,15 @@ def exists(val):
 
 class MLP (nn.Module):
 
+    """
+    Multi-layer Perceptron with customizable layer sizes and activation.
+
+    Args:
+        dims (List[int]): Sequence of layer dimensions, e.g. [in_dim, hidden_dim, out_dim].
+        act (Callable[..., nn.Module], optional): Activation function constructor (e.g. nn.ReLU).
+            Defaults to nn.ReLU if None.
+    """
+
     def __init__ (self,
                   dims, 
                   act = None
@@ -39,6 +48,16 @@ class MLP (nn.Module):
 
 class simple_MLP(nn.Module):
 
+    """
+    Simple three-layer MLP with a single hidden layer and ReLU activation.
+
+    Args:
+        dims (List[int]): [in_dim, hidden_dim, out_dim]
+
+    Forward:
+        Flattens input if needed and applies two linear layers with ReLU in between.
+    """
+
     def __init__(self,
                  dims):
 
@@ -56,6 +75,18 @@ class simple_MLP(nn.Module):
         return x
     
 class sep_MLP(nn.Module):
+
+    """
+    Separate MLP per feature: applies an independent simple_MLP to each feature slice.
+
+    Args:
+        dim (int): Input feature dimension for each slice.
+        len_feats (int): Number of feature slices (e.g. time steps or variables).
+        categories (List[int]): Output dimension for each simple_MLP.
+
+    Forward:
+        Iterates over feature slices along dim=1 and applies corresponding MLP.
+    """
 
     def __init__(self,
                  dim,
@@ -79,11 +110,26 @@ class sep_MLP(nn.Module):
     
 class GEGLU (nn.Module):
 
+    """
+    Gated GELU activation: splits input tensor into two halves and applies gating with GELU.
+
+    Forward:
+        x, gates = x.chunk(2, dim=-1)
+        return x * F.gelu(gates)
+    """
+
     def forward(self, x):
         x, gates = x.chunk(2, dim = -1)
         return x * F.gelu(gates)
 
 class Residual (nn.Module):
+
+    """
+    Wraps a module to add its input to its output (residual connection).
+
+    Args:
+        fn (nn.Module): The function/module to wrap.
+    """
 
     def __init__(self, fn):
 
@@ -95,6 +141,13 @@ class Residual (nn.Module):
     
 class PreNorm (nn.Module):
 
+    """
+    Applies LayerNorm before passing through a module.
+
+    Args:
+        dim (int): dimension to normalize over.
+        fn (nn.Module): The module to apply after normalization.
+    """
     def __init__(self, dim, fn):
 
         super().__init__()

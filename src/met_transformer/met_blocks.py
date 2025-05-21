@@ -93,6 +93,16 @@ class MLP (nn.Module):
         
 class Block (nn.Module):
 
+    """
+    Stormer Transformer block with adaptive LayerNorm and gated residuals.
+
+    Args:
+        hidden_size (int): embedding dimension for tokens.
+        num_heads (int): number of attention heads.
+        mlp_ratio (float): factor to scale hidden_size for MLP's hidden dimension.
+        **block_kwargs: additional keyword args for the Attention module.
+    """
+
     def __init__(self,
                  hidden_size: int,
                  num_heads: int,
@@ -111,7 +121,7 @@ class Block (nn.Module):
         self.mlp = MLP(hidden_size, mlp_hidden, hidden_size)
         # Adaptive LayerNorm modulation for MSA and MLP
         self.adaLN_modulation = nn.Sequential(
-            nn.SiLU(),
+            Swish(),
             nn.Linear(hidden_size, 6 * hidden_size, bias=True)
         )
 
@@ -131,4 +141,36 @@ class Block (nn.Module):
         z = self.mlp(z)
         x = x + gate_mlp.unsqueeze(1) * z
         
+        return x
+    
+class FinalLayer (nn.Module):
+
+    """
+    Final reconstruction layer with adaptive LayerNorm modulation.
+
+    Args:
+        hidden_size (int): dimension of hidden tokens.
+        patch_size (int): spatial patch dimension.
+        out_channels (int): number of output channels per patch.
+    """
+    
+    def __init__ (self,
+                  hidden_size: int,
+                  patch_size: int,
+                  out_channels: int
+                  ):
+
+        super().__init__()
+        self.norm_final = nn.LayerNorm(hidden_size, elemenetwise_affine=False, eps=1e-6)
+        self.linear = nn.Linear(hidden_size, patch_size * patch_size * out_channels, bias=True)
+
+        self.adaLN_modulation = nn.Sequential(
+            Swish(),
+            nn.Linear(hidden_size, 2 * hidden_size, bias=True)
+        )
+
+    def forward(self, x, c):
+        shift, scale = self.adaLN_modulation(c).chunk(2, dim=1)
+        x = modulate(self.norm_final(x), shift, scale)
+        x = self.linear(x)
         return x
