@@ -1,6 +1,5 @@
 import torch
 from torch import nn
-from src.met_transformer.met_blocks import MLP
 from src.met_transformer.met_attention import Attention
 from typing import List, Dict
 import re
