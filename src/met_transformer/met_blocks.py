@@ -189,7 +189,7 @@ class FeaturedWeightedEmbedding (nn.Module):
     Args:
         feature_names (List[str]): Names of each input feature (length = num_features).
         embed_dim (int): Dimension of the output embeddings.
-        init_weights (Optional[Dict[str, float]]): Optional mapping from feature_name to initial weight.
+        init_weights ([Dict[str, float]): Optional mapping from feature_name to initial weight.
             Features not in this dict default to weight 1.0.
         decay_rate (float): Exponential decay rate per day offset; weight *= exp(-decay_rate * offset).
     """
@@ -205,15 +205,6 @@ class FeaturedWeightedEmbedding (nn.Module):
         self.feature_names = feature_names
         self.num_features = len(feature_names)
         self.embed_dim = embed_dim
-
-        # Separating the different components from the data
-        self.cls_token = 0
-        self.mask = 0
-        self.X = 0
-        self.target = 0
-        self.window_mask = 0
-        self.features = 0
-
         weight_tensor = torch.ones(self.num_features, dtype=torch.float32)
 
         # Initial base weights
