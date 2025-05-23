@@ -70,7 +70,7 @@ class MLP (nn.Module):
     """
 
     def __init__ (self,
-                  dims, 
+                  dims,
                   act = None
     ):
         super().__init__()
@@ -83,7 +83,8 @@ class MLP (nn.Module):
             if i < len(dims) - 2:
                 layers.append(nn.Linear(dim_in, dim_out * 2))
                 layers.append(GLU(dim=-1))
-                layers.append(Swish())
+                act = default(act, Swish())
+                layers.append(act)
             else: 
                 layers.append(nn.Linear(dim_in, dim_out))
 
@@ -114,12 +115,13 @@ class Block (nn.Module):
         # Pre-attention norm
         self.norm1 = nn.LayerNorm(hidden_size, elementwise_affine=False, eps=1e-6)
         # Attention Wrapper
-        self.attn = Attention(hidden_size, num_heads=num_heads, qkv_bias=True, **block_kwargs)
+        self.attn = Attention(dim=hidden_size, heads=num_heads, attn_drop=0.1, proj_drop=0.1)
         # Pre-MLP norm
         self.norm2 = nn.LayerNorm(hidden_size, elementwise_affine=False, eps=1e-6)
+    
         # Two-layer MLP
         mlp_hidden = int(hidden_size * mlp_ratio)
-        self.mlp = MLP(hidden_size, mlp_hidden, hidden_size)
+        self.mlp = MLP([hidden_size, mlp_hidden, hidden_size])
         # Adaptive LayerNorm modulation for MSA and MLP
         self.adaLN_modulation = nn.Sequential(
             Swish(),
@@ -162,7 +164,7 @@ class FinalLayer (nn.Module):
                   ):
 
         super().__init__()
-        self.norm_final = nn.LayerNorm(hidden_size, elemenetwise_affine=False, eps=1e-6)
+        self.norm_final = nn.LayerNorm(hidden_size, elementwise_affine=False, eps=1e-6)
         self.linear = nn.Linear(hidden_size, patch_size * patch_size * out_channels, bias=True)
 
         self.adaLN_modulation = nn.Sequential(
@@ -241,5 +243,3 @@ class FeaturedWeightedEmbedding (nn.Module):
         # Project to embedding space
         embeddings = self.proj(x_weighted)
         return embeddings
-
-
