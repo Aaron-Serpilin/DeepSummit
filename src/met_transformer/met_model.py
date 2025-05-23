@@ -54,7 +54,12 @@ class Stormer (nn.Module):
                             mean: float = 0., 
                             std: float = 1., 
                             a: float = -2.,
-                            b: float = 2.):
+                            b: float = 2.) -> torch.Tensor:
+            
+            """
+            Fills `tensor` with values drawn from a truncated normal distribution.
+            All ops happen inside torch.no_grad() so we don’t break the computational graph.
+            """
             
             def norm_cdf(x):
                 return (1. + math.erf(x / math.sqrt(2.))) / 2.
@@ -64,13 +69,16 @@ class Stormer (nn.Module):
                     "The distribution of values may be incorrect.",
                     stacklevel=2)
                 
-            l = norm_cdf((a - mean) / std)
-            u = norm_cdf((b - mean) / std)
-            tensor.uniform_(2 * l - 1, 2 * u - 1)
-            tensor.erfinv_()
-            tensor.mul_(std * math.sqrt(2.))
-            tensor.add_(mean)
-            tensor.clamp_(min=a, max=b)
+            # Causes all in-place ops on module.weight to not complain about mutating a leaf that requires grad
+            with torch.no_grad():
+
+                l = norm_cdf((a - mean) / std)
+                u = norm_cdf((b - mean) / std)
+                tensor.uniform_(2 * l - 1, 2 * u - 1)
+                tensor.erfinv_()
+                tensor.mul_(std * math.sqrt(2.))
+                tensor.add_(mean)
+                tensor.clamp_(min=a, max=b)
             return tensor
 
 
