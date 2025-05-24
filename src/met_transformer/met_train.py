@@ -31,31 +31,45 @@ def train_step(
 
     for batch, data in enumerate(dataloader):
 
-        # Need to define y
-        optimizer.zero_grad()
-        x_categ, x_cont, y_true, cat_mask, con_mask = data[0].to(device), data[1].to(device), data[2].to(device), data[3].to(device), data[4].to(device)
+        X, mask, y, window_mask = data
 
-        # Converting data into embeddings
-        _, x_categ_emb, x_cont_emb = embed_data_mask(x_categ, x_cont, cat_mask, con_mask,model, False) 
-        sequence_embeddings = model.transformer(x_categ_emb, x_cont_emb) 
+        mask = mask.to(device)
 
-        # Extracting the cls token from each instance
-        cls_embeddings = sequence_embeddings[:, 0, :] 
-
-        # Forward pass
-        y_pred = model.mlpfory(cls_embeddings) 
-        loss = loss_fn(y_pred, y_true)
-        train_loss += loss.item()
-        loss.backward()
-        optimizer.step()
-
-        # Accuracy metrics across all batches
-        y_pred_class = torch.argmax(torch.softmax(y_pred, dim=1), dim=1)
-        train_acc += (y_pred_class == y_true).sum().item()/len(y_pred)
+        if not mask.eq(1).all():
+            print(f"⚠️ Incomplete mask in batch {batch}")
     
-    train_loss /= len(dataloader)
-    train_acc /= len(dataloader)
-    return train_loss, train_acc
+    # print(f"First instance\nX:{X[0]}\nmask:{mask[0]}\ny:{y[0]}\nwindow_mask:{window_mask[0]}\n")
+
+
+    # for batch, data in enumerate(dataloader):
+    #     print(f'Data is: {data}\n')
+
+    #     # Need to define y
+    #     optimizer.zero_grad()
+    #     x_categ, x_cont, y_true, cat_mask, con_mask = data[0].to(device), data[1].to(device), data[2].to(device), data[3].to(device), data[4].to(device)
+
+    #     # Converting data into embeddings
+    #     _, x_categ_emb, x_cont_emb = embed_data_mask(x_categ, x_cont, cat_mask, con_mask,model, False) 
+    #     sequence_embeddings = model.transformer(x_categ_emb, x_cont_emb) 
+
+    #     # Extracting the cls token from each instance
+    #     cls_embeddings = sequence_embeddings[:, 0, :] 
+
+    #     # Forward pass
+    #     y_pred = model.mlpfory(cls_embeddings) 
+    #     loss = loss_fn(y_pred, y_true)
+    #     train_loss += loss.item()
+    #     loss.backward()
+    #     optimizer.step()
+
+    #     # Accuracy metrics across all batches
+    #     y_pred_class = torch.argmax(torch.softmax(y_pred, dim=1), dim=1)
+    #     train_acc += (y_pred_class == y_true).sum().item()/len(y_pred)
+    
+    # train_loss /= len(dataloader)
+    # train_acc /= len(dataloader)
+    # return train_loss, train_acc
+    return (0., 0.)
 
 def test_step(
     model: torch.nn.Module, 

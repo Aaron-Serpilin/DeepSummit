@@ -12,6 +12,7 @@ class WeatherDataset (Dataset):
     def __init__(self,
                  csv_file: Path,
                  target_column: str,
+                 priority_features: List[str] = None,
                  metadata_cols: List[str] = None,
                  continuous_mean_std: List[Tuple[float, float]] = None,
                  transform: transforms.Compose = None
@@ -74,8 +75,9 @@ class WeatherDataset (Dataset):
         self.stds = np.array([std for mean, std in continuous_mean_std], dtype=np.float32)
         self.stds[self.stds == 0] = 1.0 # we do this to avoid division by 0 problems
 
-        # Mask to signal priorities/ignored features
-        self.mask = np.ones(self.num_days, dtype=np.int64)
+        # Mask to signal priority features
+        self.priority_features = priority_features
+        self.mask = np.array([1 if feat in priority_features else 0 for feat in self.base_features], dtype=np.int64)
 
         # [ cls ] token
         self.cls = np.array([1], dtype=np.int64)
@@ -93,8 +95,6 @@ class WeatherDataset (Dataset):
 
             for intra_context in range(1, seq_len)
         ], axis=0) 
-
-        ### Later add another mask for pressure and most relevant features according to other research papers
 
     def __len__(self) -> int:
         return len(self.data)
