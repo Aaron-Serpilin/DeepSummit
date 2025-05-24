@@ -237,8 +237,19 @@ class FeaturedWeightedEmbedding (nn.Module):
                  x: torch.Tensor
                  ) -> torch.Tensor:
         
-        # Scale features by learned weights
-        x_weighted = x * self.feature_weights.unsqueeze(0).unsqueeze(0)
+        """
+        x shape: (B, T+1, F) where T+1 includes [ cls ] token at index 0 (T is the number of days) and where F=self.num_features
+        """
+        
+        # Splitting off the cls row and the days row for size matches in training
+        cls_row = x[:, :1, :]
+        day_rows = x[:, 1:, :]
+
+        # We apply the weights only to the days themselves, scaling the features by the learned weights
+        weighted_days = day_rows * self.feature_weights.view(1, 1, -1)
+
+        # Re-concatenating the cls row
+        x_weighted = torch.cat([cls_row, weighted_days], dim=1)
 
         # Project to embedding space
         embeddings = self.proj(x_weighted)

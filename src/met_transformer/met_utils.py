@@ -114,7 +114,7 @@ class WeatherDataset (Dataset):
 
         # Creation [ cls ] token, and prepending it
         cls_token = np.zeros((1, self.num_feats_per_day), dtype=np.float32)
-        X = np.vstack([cls_token, X_days]) # shape: (num_days+1, num_feats_per_day)
+        X = np.vstack([cls_token, X_days]) # shape: (num_days+1, num_feats_per_day), length 56
 
         # Building full mask [ cls ] + each day
         mask = np.concatenate([self.cls, self.mask], axis=0)

@@ -11,7 +11,8 @@ def train_step(
     dataloader: torch.utils.data.DataLoader, 
     loss_fn: torch.nn.Module,
     optimizer: torch.optim.Optimizer, 
-    device: torch.device
+    device: torch.device,
+    lambda_reg: float = 1e-3
     ) -> Tuple[float, float]:
 
     """ 
@@ -31,44 +32,32 @@ def train_step(
 
     for batch, data in enumerate(dataloader):
 
-        X, mask, y, window_mask = data
+        optimizer.zero_grad()
 
-        mask = mask.to(device)
+        X, mask, y_true, window_mask = data
+        X, mask, y_true, window_mask = X.to(device), mask.to(device), y_true.to(device), window_mask.to(device)
 
-       
-    
-    print(f"First instance\nX:{X[0]}\nmask:{mask[0]}\ny:{y[0]}\nwindow_mask:{window_mask[0]}\n")
+        # Forward pass
+        y_pred = model(X)
 
+        # Regularization for mask and weights precedence initialization
+        classification_loss = loss_fn(y_pred, y_true)
+        weights = model.embedding.feature_weights
+        reg_loss = lambda_reg * torch.sum(weights * weights)
 
-    # for batch, data in enumerate(dataloader):
-    #     print(f'Data is: {data}\n')
+        loss = classification_loss + reg_loss
+        train_loss += loss.item()
+        loss.backward()
+        optimizer.step()
 
-    #     # Need to define y
-    #     optimizer.zero_grad()
-    #     x_categ, x_cont, y_true, cat_mask, con_mask = data[0].to(device), data[1].to(device), data[2].to(device), data[3].to(device), data[4].to(device)
+        # Accuracy metrics across all batches
+        y_pred_class = torch.argmax(torch.softmax(y_pred, dim=1), dim=1)
+        train_acc += (y_pred_class == y_true).sum().item()/len(y_pred)
 
-    #     # Converting data into embeddings
-    #     _, x_categ_emb, x_cont_emb = embed_data_mask(x_categ, x_cont, cat_mask, con_mask,model, False) 
-    #     sequence_embeddings = model.transformer(x_categ_emb, x_cont_emb) 
+    train_loss /= len(dataloader)
+    train_acc /= len(dataloader)
+    return train_loss, train_acc
 
-    #     # Extracting the cls token from each instance
-    #     cls_embeddings = sequence_embeddings[:, 0, :] 
-
-    #     # Forward pass
-    #     y_pred = model.mlpfory(cls_embeddings) 
-    #     loss = loss_fn(y_pred, y_true)
-    #     train_loss += loss.item()
-    #     loss.backward()
-    #     optimizer.step()
-
-    #     # Accuracy metrics across all batches
-    #     y_pred_class = torch.argmax(torch.softmax(y_pred, dim=1), dim=1)
-    #     train_acc += (y_pred_class == y_true).sum().item()/len(y_pred)
-    
-    # train_loss /= len(dataloader)
-    # train_acc /= len(dataloader)
-    # return train_loss, train_acc
-    return (0., 0.)
 
 def test_step(
     model: torch.nn.Module, 
@@ -93,17 +82,11 @@ def test_step(
 
         for batch, data in enumerate(dataloader):
 
-            x_categ, x_cont, y_true, cat_mask, con_mask = data[0].to(device), data[1].to(device), data[2].to(device), data[3].to(device), data[4].to(device)
-
-            # Converting data into embeddings
-            _, x_categ_emb, x_cont_emb = embed_data_mask(x_categ, x_cont, cat_mask, con_mask,model, False) 
-            sequence_embeddings = model.transformer(x_categ_emb, x_cont_emb) 
-
-            # Extracting the cls token from each instance
-            cls_embeddings = sequence_embeddings[:, 0, :] 
+            X, mask, y_true, window_mask = data
+            X, mask, y_true, window_mask = X.to(device), mask.to(device), y_true.to(device), window_mask.to(device)
 
             # Forward pass
-            y_pred = model.mlpfory(cls_embeddings) 
+            y_pred = model(X)
 
             # Calculate and accumulate loss
             loss = loss_fn(y_pred, y_true)
