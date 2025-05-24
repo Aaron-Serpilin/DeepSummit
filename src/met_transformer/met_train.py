@@ -35,10 +35,9 @@ def train_step(
 
         mask = mask.to(device)
 
-        if not mask.eq(1).all():
-            print(f"⚠️ Incomplete mask in batch {batch}")
+       
     
-    # print(f"First instance\nX:{X[0]}\nmask:{mask[0]}\ny:{y[0]}\nwindow_mask:{window_mask[0]}\n")
+    print(f"First instance\nX:{X[0]}\nmask:{mask[0]}\ny:{y[0]}\nwindow_mask:{window_mask[0]}\n")
 
 
     # for batch, data in enumerate(dataloader):

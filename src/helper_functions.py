@@ -53,6 +53,14 @@ def set_data_splits (X,
     train_dir = base_dir / "train"
     val_dir = base_dir / "val"
     test_dir = base_dir / "test"
+
+    train_file = train_dir / "train.csv"
+    val_file   = val_dir   / "val.csv"
+    test_file  = test_dir  / "test.csv"
+
+    if train_file.exists() and val_file.exists() and test_file.exists():
+        print(f"[INFO] Data splits already exist under {base_dir}. Skipping split.")
+        return
     
     train_dir.mkdir(parents=True, exist_ok=True)
     test_dir.mkdir(parents=True, exist_ok=True)
@@ -64,10 +72,6 @@ def set_data_splits (X,
     train_set = pd.concat([X_train, y_train], axis=1)
     val_set   = pd.concat([X_val, y_val], axis=1)
     test_set  = pd.concat([X_test, y_test], axis=1) 
-
-    train_file = train_dir / "train.csv"
-    val_file   = val_dir   / "val.csv"
-    test_file  = test_dir  / "test.csv"
 
     train_set.to_csv(train_file, index=False)
     val_set.to_csv(val_file, index=False)
