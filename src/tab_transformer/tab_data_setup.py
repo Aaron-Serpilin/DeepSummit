@@ -11,7 +11,7 @@ from src.tab_transformer.tab_utils import TabularDataset
 
 # Documentation to run the Himalayan Database on MacOS can be found here: https://www.himalayandatabase.com/crossover.html
 
-def load_himalayan_data () -> Tuple[DataLoader, DataLoader, DataLoader]:
+def load_himalayas_data () -> pd.DataFrame | None:
 
     ### 1. Loading Data ###
 
@@ -72,52 +72,54 @@ def load_himalayan_data () -> Tuple[DataLoader, DataLoader, DataLoader]:
     # # These rows will be dropped since there is no way to impute their year, nor date, only the season. Given their class imbalance, their incomplete inclusion might provide unnecessary noise. 
 
     merged_df = merged_df.dropna(subset=['SMTDATE'])
-    categorical_columns = ['SEX', 'CITIZEN', 'STATUS', 'MO2USED', 'MROUTE1', 'SEASON', 'O2USED']
-    continuous_columns = ['CALCAGE', 'HEIGHTM', 'MDEATHS', 'HDEATHS', 'SMTMEMBERS', 'SMTHIRED']
+    return merged_df
+    # categorical_columns = ['SEX', 'CITIZEN', 'STATUS', 'MO2USED', 'MROUTE1', 'SEASON', 'O2USED']
+    # continuous_columns = ['CALCAGE', 'HEIGHTM', 'MDEATHS', 'HDEATHS', 'SMTMEMBERS', 'SMTHIRED']
 
     ### 4. Feature Matrix and Target Vector ###
 
-    seed = 42
-    set_seeds(seed)
-    feature_columns = categorical_columns + continuous_columns
-    X = merged_df[feature_columns]
-    y = merged_df['Target']
+    # seed = 42
+    # set_seeds(seed)
+    # feature_columns = categorical_columns + continuous_columns
+    # X = merged_df[feature_columns]
+    # y = merged_df['Target']
 
     ### 5. Splits ###
 
-    splits_path = Path("data/himalayas_data")
-    set_data_splits(X, y, splits_path, 42)
+    # splits_path = Path("data/himalayas_data")
+    # set_data_splits(X, y, splits_path, 42)
 
-    # For reproducibility
-    output_file = splits_path / "processed_himalaya_data.csv"
+    # # For reproducibility
+    # output_file = splits_path / "processed_himalaya_data.csv"
 
-    if output_file.exists():
-        print("[INFO] Himalaya Data has already been processed")
-    else: 
-        himalayan_data_path.mkdir(parents=True, exist_ok=True)
-        merged_df.to_csv(output_file, index=False)
+    # if output_file.exists():
+    #     print("[INFO] Himalaya Data has already been processed")
+    # else: 
+    #     himalayan_data_path.mkdir(parents=True, exist_ok=True)
+    #     merged_df.to_csv(output_file, index=False)
 
-    ### 6. Creating the Tabular Dataset structure ###
+    # ### 6. Creating the Tabular Dataset structure ###
 
-    himalayan_train_file = Path("data/himalayas_data/train/train.csv")
-    himalayan_val_file = Path("data/himalayas_data/val/val.csv")
-    himalayan_test_file = Path("data/himalayas_data/test/test.csv")
+    # himalayan_train_file = Path("data/himalayas_data/train/train.csv")
+    # himalayan_val_file = Path("data/himalayas_data/val/val.csv")
+    # himalayan_test_file = Path("data/himalayas_data/test/test.csv")
 
-    continuous_means = [merged_df[col].mean() for col in continuous_columns]
-    continuous_stds = [merged_df[col].std() for col in continuous_columns]
-    continuous_mean_std = list(zip(continuous_means, continuous_stds))
+    # continuous_means = [merged_df[col].mean() for col in continuous_columns]
+    # continuous_stds = [merged_df[col].std() for col in continuous_columns]
+    # continuous_mean_std = list(zip(continuous_means, continuous_stds))
 
-    train_dataloader, val_dataloader, test_dataloader = create_dataloaders(
-        dataset_class=TabularDataset,
-        train_file=himalayan_train_file,
-        val_file=himalayan_val_file,
-        test_file=himalayan_test_file,
-        num_workers=os.cpu_count(),
-        batch_size=32,
-        dataset_kwargs={
-            'target_column': 'Target',
-            'cat_cols': categorical_columns,
-            'continuous_mean_std': continuous_mean_std,
-        }
-    )
-    return (train_dataloader, val_dataloader, test_dataloader)
+    # train_dataloader, val_dataloader, test_dataloader = create_dataloaders(
+    #     dataset_class=TabularDataset,
+    #     train_file=himalayan_train_file,
+    #     val_file=himalayan_val_file,
+    #     test_file=himalayan_test_file,
+    #     num_workers=os.cpu_count(),
+    #     batch_size=32,
+    #     dataset_kwargs={
+    #         'target_column': 'Target',
+    #         'cat_cols': categorical_columns,
+    #         'continuous_mean_std': continuous_mean_std,
+    #     }
+    # )
+    # return (train_dataloader, val_dataloader, test_dataloader)
+    # return None

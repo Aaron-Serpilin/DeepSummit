@@ -15,7 +15,7 @@ def exists(val):
 def default(val, d):
     return val if exists(val) else d
 
-### Blocks ##3
+### Blocks ###
 
 class Swish (nn.Module):
 
