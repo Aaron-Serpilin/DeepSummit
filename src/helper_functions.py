@@ -1,6 +1,5 @@
 # Standard Library Imports
 import os
-import zipfile
 from pathlib import Path
 
 # Third-Party Scientific Libraries
@@ -8,7 +7,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import requests
-from typing import Type, List, Tuple, Dict, Any
+from typing import Type, Tuple, Dict, Any
 
 # PyTorch Imports
 import torch
@@ -17,9 +16,6 @@ from torch.utils.data import DataLoader
 
 # Scikit-Learn for Data Splitting and Other Utilities
 from sklearn.model_selection import train_test_split
-
-# Imports from project directories
-from src.tab_transformer.tab_utils import TabularDataset
 
 ### Randomization ###
 

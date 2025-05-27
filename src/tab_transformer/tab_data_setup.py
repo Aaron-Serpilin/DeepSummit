@@ -1,125 +1,113 @@
-import torch
-from torch.utils.data import DataLoader
 import pandas as pd
 from pathlib import Path
 from dbfread import DBF
-from typing import Tuple
-import os
+from typing import Dict, List, Set
 
-from src.helper_functions import set_seeds, set_data_splits, create_dataloaders
-from src.tab_transformer.tab_utils import TabularDataset
+def prepare_himalayas_data(relevant_columns: Dict[str, List[str]],
+                           relevant_ids: Set[str]
+                           ) -> pd.DataFrame:
+    
+    """
+    Load the three raw DBF tables, subset to only the needed columns,
+    filter to only the 8K peaks & sub-peaks, and merge into one DataFrame.
+
+    Args:
+        relevant_columns: mapping table name → list of columns to retain
+        relevant_ids: set of PEAKID codes to include
+
+    Returns:
+        A single merged DataFrame (members ← exped ← peaks), filtered as above.
+    """
+
+    data_path = Path("data/himalayas_data/database_files")
+
+    himalayas_files = {
+        "exped": data_path / "exped.DBF", 
+        "members": data_path / "members.DBF",
+        "peaks":  data_path / "peaks.DBF",
+    }
+
+    # Raw Data
+    raw_dataframe = {
+        key: pd.DataFrame(iter(DBF(himalayas_files[key], load=True)))
+        for key in ["exped", "members", "peaks"]
+    }
+
+    # Column subset of only desired features
+    subset_dataframe = {
+        key: df[relevant_columns[key]]
+        for key, df in raw_dataframe.items()
+        if key in relevant_columns
+    }
+
+    # Peak subset of only desired PEAKIDs
+    for key in ("exped", "members"):
+        subset_dataframe[key] = subset_dataframe[key][subset_dataframe[key] ["PEAKID"].isin(relevant_ids)]
+
+    # Merging columns to develop the DataFrame
+    df = (
+        subset_dataframe["members"]
+        .merge(subset_dataframe["exped"],   on=["EXPID","PEAKID"], how="left")
+        .merge(subset_dataframe["peaks"],   on=["PEAKID"],        how="left")
+    )
+
+    # Dropping duplicate climber events
+    df = df.drop_duplicates(subset=["EXPID","PEAKID","MEMBID"])
+    assert df.duplicated(subset=["EXPID","PEAKID","MEMBID"]).sum() == 0, "The dataset contains duplicates that disable our unique identifier on EXPID, PEAKID, MEMBID. Address these duplicates."
+    return df
+
+def finalize_himalayas_data(df: pd.DataFrame) -> pd.DataFrame:
+
+    """
+    Turn MSUCCESS → Target, drop MSUCCESS & any rows missing SMTDATE.
+
+    Args:
+        df: the merged DataFrame from prepare_himalayas_data
+
+    Returns:
+        Cleaned DataFrame with a binary 'Target' column and no null SMTDATE.
+    """
+
+    df = df[df["MSUCCESS"].notnull()].copy()
+    df["Target"] = df["MSUCCESS"].map({True: 1, False: 0})
+    df = df.drop(columns="MSUCCESS")
+    # When analyzing the dataset, 1104 instances lack SMTDATE, out of which 1100 are unsuccessful attempts. Hence, it is a strong indicator of summit failure.
+    # These rows will be dropped since there is no way to impute their year, nor date, only the season. Given their class imbalance, their incomplete inclusion might provide unnecessary noise. 
+    return df.dropna(subset=["SMTDATE"])
 
 # Documentation to run the Himalayan Database on MacOS can be found here: https://www.himalayandatabase.com/crossover.html
+def load_himalayas_data (do_prepare: bool = False,
+                         do_finalize: bool = False,
+                        ) -> pd.DataFrame | None:
+    
+    """
+    Carries out the entire Himalayas data preparation, and build the corresponding ML-instance .csv file.
+    This function however does not request the data as the raw files are obtained from the Himalayan Database. 
 
-def load_himalayas_data () -> pd.DataFrame | None:
+    Args:
+        do_prepare:  run prepare_himalayas_data (load, filter, merge)
+        do_finalize: run finalize_himalayas_data (map & clean)
 
-    ### 1. Loading Data ###
+    Returns:
+        The final DataFrame if do_finalize=True, else None.
+    """
 
-    himalayan_data_path = Path('data/himalayas_data/database_files')
-
-    himalaya_files = {
-        "exped": himalayan_data_path / "exped.DBF", 
-        "members": himalayan_data_path / "members.DBF",
-        "peaks":  himalayan_data_path / "peaks.DBF",
-    }
-
-    himalaya_dataframes = {
-    key: pd.DataFrame(iter(DBF(himalaya_files[key], load=True)))
-        for key in ['exped', 'members', 'peaks']
-    }
-
+    if not do_prepare:
+        return None
+    
     relevant_dataframe_columns = {
         "exped": ['EXPID', 'PEAKID', 'SMTDATE', 'SEASON', 'SMTMEMBERS', 'SMTHIRED', 'MDEATHS', 'HDEATHS', 'O2USED'],
         "members": ['EXPID', 'PEAKID', 'MEMBID', 'MSUCCESS', 'SEX', 'CALCAGE', 'CITIZEN', 'STATUS', 'MO2USED', 'MROUTE1'],
         "peaks": ['PEAKID', 'PKNAME', 'HEIGHTM']
     }
 
-    filtered_himalaya_dataframes = {
-        key: df[relevant_dataframe_columns[key]]
-        for key, df in himalaya_dataframes.items()
-        if key in relevant_dataframe_columns
-    }
-
     eight_k_peak_ids = ['ANN1', 'CHOY', 'DHA1', 'EVER', 'KANG', 'LHOT', 'MAKA', 'MANA'] # Given the weather dataset, we are interested in the 8K peaks. Hence, we will filter our data based on them
-    subpeak_ids = ['ANNM', 'ANNE', 'KANC', 'KANS', 'LSHR', 'YALU', 'YALW', 'LHOM'] # The Himalayan database only has information on the Nepalese Himalayas. Hence, we will use subpeaks as well to have a more thorough dataset
+    subpeak_ids = ['ANNM', 'ANNE', 'KANC', 'KANS', 'LSHR', 'YALU', 'YALW', 'LHOM'] # The Himalayan database only has information on the Nepalese Himalayas. Hence, we will use sub peaks as well to have a more thorough dataset
     relevant_ids = set(eight_k_peak_ids + subpeak_ids)
 
-    relevant_himalaya_dataframes = {
-        key: df[df['PEAKID'].isin(relevant_ids)]
-        for key, df in filtered_himalaya_dataframes.items()
-    }
+    merged_df = prepare_himalayas_data(relevant_dataframe_columns, relevant_ids)
 
-    ### 2. Developing DataFrames ###
-
-    merged_df = (
-        relevant_himalaya_dataframes["members"]
-        .merge(relevant_himalaya_dataframes["exped"], on=["EXPID", "PEAKID"], how="left")
-        .merge(relevant_himalaya_dataframes["peaks"], on="PEAKID", how="left")
-    )
-
-    unique_key = ['EXPID', 'PEAKID', 'MEMBID'] # these three values together identify a unique climber-experience record
-    merged_df = merged_df.drop_duplicates(subset=unique_key)
-
-    assert merged_df.duplicated(subset=unique_key).sum() == 0, "The dataset contains duplicates that disable our unique identifier on EXPID, PEAKID, MEMBID. Address these duplicates."
-
-    merged_df = merged_df[merged_df['MSUCCESS'].notnull()] 
-    merged_df['Target'] = merged_df['MSUCCESS'].map({True: 1, False:0})
-    merged_df = merged_df.drop(columns='MSUCCESS') # after the mapping we no longer need this column
-
-    ### 3. Processing different feature datatypes ###
-
-    # When analyzing the dataset, 1104 instances lack SMTDATE, out of which 1100 are unsuccessful attempts. Hence, it is a strong indicator of summit failure.
-    # # These rows will be dropped since there is no way to impute their year, nor date, only the season. Given their class imbalance, their incomplete inclusion might provide unnecessary noise. 
-
-    merged_df = merged_df.dropna(subset=['SMTDATE'])
-    return merged_df
-    # categorical_columns = ['SEX', 'CITIZEN', 'STATUS', 'MO2USED', 'MROUTE1', 'SEASON', 'O2USED']
-    # continuous_columns = ['CALCAGE', 'HEIGHTM', 'MDEATHS', 'HDEATHS', 'SMTMEMBERS', 'SMTHIRED']
-
-    ### 4. Feature Matrix and Target Vector ###
-
-    # seed = 42
-    # set_seeds(seed)
-    # feature_columns = categorical_columns + continuous_columns
-    # X = merged_df[feature_columns]
-    # y = merged_df['Target']
-
-    ### 5. Splits ###
-
-    # splits_path = Path("data/himalayas_data")
-    # set_data_splits(X, y, splits_path, 42)
-
-    # # For reproducibility
-    # output_file = splits_path / "processed_himalaya_data.csv"
-
-    # if output_file.exists():
-    #     print("[INFO] Himalaya Data has already been processed")
-    # else: 
-    #     himalayan_data_path.mkdir(parents=True, exist_ok=True)
-    #     merged_df.to_csv(output_file, index=False)
-
-    # ### 6. Creating the Tabular Dataset structure ###
-
-    # himalayan_train_file = Path("data/himalayas_data/train/train.csv")
-    # himalayan_val_file = Path("data/himalayas_data/val/val.csv")
-    # himalayan_test_file = Path("data/himalayas_data/test/test.csv")
-
-    # continuous_means = [merged_df[col].mean() for col in continuous_columns]
-    # continuous_stds = [merged_df[col].std() for col in continuous_columns]
-    # continuous_mean_std = list(zip(continuous_means, continuous_stds))
-
-    # train_dataloader, val_dataloader, test_dataloader = create_dataloaders(
-    #     dataset_class=TabularDataset,
-    #     train_file=himalayan_train_file,
-    #     val_file=himalayan_val_file,
-    #     test_file=himalayan_test_file,
-    #     num_workers=os.cpu_count(),
-    #     batch_size=32,
-    #     dataset_kwargs={
-    #         'target_column': 'Target',
-    #         'cat_cols': categorical_columns,
-    #         'continuous_mean_std': continuous_mean_std,
-    #     }
-    # )
-    # return (train_dataloader, val_dataloader, test_dataloader)
-    # return None
+    if do_finalize:
+        return finalize_himalayas_data(merged_df)
+    
+    return None
