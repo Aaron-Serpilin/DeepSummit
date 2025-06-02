@@ -15,7 +15,8 @@ class WeatherDataset (Dataset):
                  priority_features: List[str] = None,
                  metadata_cols: List[str] = None,
                  continuous_mean_std: List[Tuple[float, float]] = None,
-                 transform: transforms.Compose = None
+                 transform: transforms.Compose = None,
+                 variables: List[str] = None
                  ):
         
         """
@@ -37,17 +38,23 @@ class WeatherDataset (Dataset):
         if metadata_cols is None:
             metadata_cols = ["PEAKID", "parent_peakid", "event_date"]
 
+        if variables is None:
+            raise ValueError("You must pass a variable list")
+
         excluded_columns = set(metadata_cols + [target_column])
 
         # Features DataFrame and column list
         self.feature_df = self.data.drop(columns=excluded_columns, errors="ignore") # DataFrame containing all of the values for every flattened feature column
         self.num_features = len(self.feature_df)
+        self.num_flat_features = len(self.feature_df.columns)
         self.feature_cols = list(self.feature_df.columns) # flattened column names with the the feature and time offset
 
         # Parsing base feature names and day offsets
         pattern = re.compile(r"^(?P<feat>.+)_t-(?P<off>\d+)$")
         features = set()
         offsets = set()
+
+        # print(f"Features: {len(self.feature_df)}")
       
         for column in self.feature_df:
 
@@ -58,8 +65,13 @@ class WeatherDataset (Dataset):
             features.add(feature.group("feat"))
             offsets.add(int(feature.group("off")))
 
+        # print(f"Features: {features}\nOffsets: {offsets}\n")
+
         # Metadata
         self.base_features = sorted(features) # flattened column names without time offsets
+        self.test = list(variables)
+        # print(f"Test base: {self.test}\nOriginal base: {self.base_features}\nTest vs Original length: {len(self.test)} vs {len(self.base_features)}\n")
+        # print(f"Base features: {len(self.base_features)}")
         self.offsets = sorted(offsets)
         self.num_days = len(self.offsets)
         self.num_feats_per_day = len(self.base_features)
@@ -79,16 +91,12 @@ class WeatherDataset (Dataset):
         self.priority_features = priority_features
         self.mask = np.array([1 if feat in priority_features else 0 for feat in self.base_features], dtype=np.int64)
 
-        # [ cls ] token
-        self.cls = np.array([1], dtype=np.int64)
-
         # Intra-sample masks for multiple smaller views of the context days
         seq_len = 1 + self.num_days # we add 1 due to the [ cls ] token
-        self.full_mask = np.concatenate([self.cls, self.mask])
 
         self.window_masks = np.stack([
             np.concatenate([
-                self.cls,
+                # self.cls,
                 np.ones(intra_context, dtype=np.int64),
                 np.zeros(self.num_days - intra_context, dtype=np.int64)
             ])
@@ -112,12 +120,8 @@ class WeatherDataset (Dataset):
         # Reshaping into (days, feats)
         X_days = flat.reshape(self.num_days, self.num_feats_per_day)
 
-        # Creation [ cls ] token, and prepending it
-        cls_token = np.zeros((1, self.num_feats_per_day), dtype=np.float32)
-        X = np.vstack([cls_token, X_days]) # shape: (num_days+1, num_feats_per_day), length 56
-
-        # Building full mask [ cls ] + each day
-        mask = np.concatenate([self.cls, self.mask], axis=0)
+        X = X_days
+        mask = self.mask
 
         # Label
         y = np.int64(row[self.target_column])
@@ -135,3 +139,4 @@ class WeatherDataset (Dataset):
         window_mask_tensor = torch.tensor(window_masks)
 
         return X_tensor, mask_tensor, target_tensor, window_mask_tensor
+

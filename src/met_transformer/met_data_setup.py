@@ -361,7 +361,6 @@ def build_event_instances (tabular_df: pd.DataFrame,
     raw_peak = row['PEAKID']
     parent_peak = peakid_map.get(raw_peak, raw_peak)
     mountain_df = weather_dfs.get(parent_peak)
-    # print(f"Raw peak is {raw_peak}\nParent peak is {parent_peak}\nMountain df is {mountain_df}")
 
     if mountain_df is None:
       print(f"[Skipping] No weather DataFrame loaded for peak {parent_peak}")
