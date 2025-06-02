@@ -7,6 +7,171 @@ from pathlib import Path
 import numpy as np
 from typing import List, Tuple
 
+variables_long = [
+    "10m_u_component_of_wind",
+    "10m_v_component_of_wind",
+    "2m_dewpoint_temperature",
+    "2m_temperature",
+    "mean_sea_level_pressure",
+    # "sea_surface_temperature",
+    "surface_pressure",
+    "total_precipitation",
+    "ice_temperature_layer_1",
+    "ice_temperature_layer_2",
+    "ice_temperature_layer_3",
+    "ice_temperature_layer_4",
+    "maximum_2m_temperature_since_previous_post_processing",
+    "minimum_2m_temperature_since_previous_post_processing",
+    "skin_temperature",
+    "100m_u_component_of_wind",
+    "100m_v_component_of_wind",
+    "10m_u_component_of_neutral_wind",
+    "10m_v_component_of_neutral_wind",
+    "10m_wind_gust_since_previous_post_processing",
+    "instantaneous_10m_wind_gust",
+    "cloud_base_height",
+    "high_cloud_cover",
+    "low_cloud_cover",
+    "medium_cloud_cover",
+    "total_cloud_cover",
+    "total_column_cloud_ice_water",
+    "total_column_cloud_liquid_water",
+    "vertical_integral_of_divergence_of_cloud_frozen_water_flux",
+    "vertical_integral_of_divergence_of_cloud_liquid_water_flux",
+    "vertical_integral_of_eastward_cloud_frozen_water_flux",
+    "vertical_integral_of_eastward_cloud_liquid_water_flux",
+    "vertical_integral_of_northward_cloud_frozen_water_flux",
+    "vertical_integral_of_northward_cloud_liquid_water_flux",
+    "convective_precipitation",
+    "convective_rain_rate",
+    "instantaneous_large_scale_surface_precipitation_fraction",
+    "large_scale_rain_rate",
+    "large_scale_precipitation",
+    "large_scale_precipitation_fraction",
+    "maximum_total_precipitation_rate_since_previous_post_processing",
+    "minimum_total_precipitation_rate_since_previous_post_processing",
+    "precipitation_type",
+    "total_column_rain_water",
+    "convective_snowfall",
+    "convective_snowfall_rate_water_equivalent",
+    "large_scale_snowfall_rate_water_equivalent",
+    "large_scale_snowfall",
+    "snow_albedo",
+    "snow_density",
+    "snow_depth",
+    "snow_evaporation",
+    "snowfall",
+    "snowmelt",
+    "temperature_of_snow_layer",
+    "total_column_snow_water"
+]
+
+long_to_short = {
+    "10m_u_component_of_wind": "10u",
+    "10m_v_component_of_wind": "10v",
+    "2m_dewpoint_temperature": "2d",
+    "2m_temperature": "2t",
+    "mean_sea_level_pressure": "msl",
+    # "sea_surface_temperature": "sst",
+    "surface_pressure": "sp",
+    "total_precipitation": "tp",
+    "ice_temperature_layer_1": "istl1",
+    "ice_temperature_layer_2": "istl2",
+    "ice_temperature_layer_3": "istl3",
+    "ice_temperature_layer_4": "istl4",
+    "maximum_2m_temperature_since_previous_post_processing": "mx2t",
+    "minimum_2m_temperature_since_previous_post_processing": "mn2t",
+    "skin_temperature": "skt",
+    "100m_u_component_of_wind": "100u",
+    "100m_v_component_of_wind": "100v",
+    "10m_u_component_of_neutral_wind": "u10n",
+    "10m_v_component_of_neutral_wind": "v10n",
+    "10m_wind_gust_since_previous_post_processing": "10fg",
+    "instantaneous_10m_wind_gust": "i10fg",
+    "cloud_base_height": "cbh",
+    "high_cloud_cover": "hcc",
+    "low_cloud_cover": "lcc",
+    "medium_cloud_cover": "mcc",
+    "total_cloud_cover": "tcc",
+    "total_column_cloud_ice_water": "tciw",
+    "total_column_cloud_liquid_water": "tclw",
+    "vertical_integral_of_divergence_of_cloud_frozen_water_flux": "viiwd",
+    "vertical_integral_of_divergence_of_cloud_liquid_water_flux": "vilwd",
+    "vertical_integral_of_eastward_cloud_frozen_water_flux": "viiwe",
+    "vertical_integral_of_eastward_cloud_liquid_water_flux": "vilwe",
+    "vertical_integral_of_northward_cloud_frozen_water_flux": "viiwn",
+    "vertical_integral_of_northward_cloud_liquid_water_flux": "vilwn",
+    "convective_precipitation": "cp",
+    "convective_rain_rate": "crr",
+    "instantaneous_large_scale_surface_precipitation_fraction": "ilspf",
+    "large_scale_rain_rate": "lsrr",
+    "large_scale_precipitation": "lsp",
+    "large_scale_precipitation_fraction": "lspf",
+    "maximum_total_precipitation_rate_since_previous_post_processing": "mxtpr",
+    "minimum_total_precipitation_rate_since_previous_post_processing": "mntpr",
+    "precipitation_type": "ptype",
+    "total_column_rain_water": "tcrw",
+    "convective_snowfall": "csf",
+    "convective_snowfall_rate_water_equivalent": "csfr",
+    "large_scale_snowfall_rate_water_equivalent": "lssfr",
+    "large_scale_snowfall": "lsf",
+    "snow_albedo": "asn",
+    "snow_density": "rsn",
+    "snow_depth": "sd",
+    "snow_evaporation": "es",
+    "snowfall": "sf",
+    "snowmelt": "smlt",
+    "temperature_of_snow_layer": "tsn",
+    "total_column_snow_water": "tcsw"
+}
+
+def check_csv_features(csv_file: str) -> None:
+    """
+    Loads `csv_file`, extracts the short‐code prefixes before '_t-<offset>' from its column names,
+    and prints any variables in `variables_long` whose mapped short code is missing in the CSV.
+    
+    Args:
+        csv_file: Path to the flattened weather CSV.
+        variables_long: List of descriptive variable names (length 56).
+        long_to_short: Dict mapping each long name in variables_long to its short code prefix.
+    """
+    # 1) Load CSV into a DataFrame
+    df = pd.read_csv(csv_file)
+    
+    # 2) Collect all "<short>_t-<offset>" prefixes actually present
+    pattern = re.compile(r"^(?P<feat>.+)_t-(?P<off>\d+)$")
+    extracted_features = set()
+    for col in df.columns:
+        m = pattern.match(col)
+        if m:
+            extracted_features.add(m.group("feat"))
+    
+    # 3) Print all found short codes, sorted
+    print("Features found in CSV (prefix before '_t-<offset>'):")
+    for feat in sorted(extracted_features):
+        print(f"  {feat}")
+    print(f"\nTotal distinct prefixes extracted: {len(extracted_features)}\n")
+    
+    # 4) Compare against the provided long‐name list
+    missing_shorts = []
+    for long_name in variables_long:
+        short = long_to_short.get(long_name)
+        if short is None:
+            # No mapping provided for this long_name
+            missing_shorts.append((long_name, None))
+        elif short not in extracted_features:
+            missing_shorts.append((long_name, short))
+    
+    if missing_shorts:
+        print("The following long‐names map to short codes not found in the CSV:")
+        for long_name, short in missing_shorts:
+            if short is None:
+                print(f"  {long_name!r} → no short‐code mapping provided")
+            else:
+                print(f"  {long_name!r}  →  expected prefix '{short}'  (MISSING)")
+    else:
+        print("All expected short codes appear in the CSV.")
+
 class WeatherDataset (Dataset):
 
     def __init__(self,
@@ -30,6 +195,8 @@ class WeatherDataset (Dataset):
         """
         
         self.data = pd.read_csv(csv_file, parse_dates=True)
+
+        check_csv_features(csv_file=csv_file)
 
         # Params
         self.target_column = target_column
