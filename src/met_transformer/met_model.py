@@ -100,26 +100,6 @@ class Stormer (nn.Module):
         nn.init.constant_(self.head.linear.bias, 0)
 
 
-    def unpatchify (self,
-                    x: torch.Tensor,
-                    h = None,
-                    w = None):
-        
-        """
-        x: (B, L, V * patch_size**2) → output (B, V, H, W)
-        """
-        
-        p = self.patch_size
-        v = len(self.variables)
-        h = self.in_img_size[0] // p if h is None else h // p
-        w = self.in_img_size[1] // p if w is None else w // p
-        assert h * w == x.shape[1], "sequence length mismatch"
-
-        x = x.reshape(shape=(x.shape[0], h, w, p, p, v))
-        x = torch.einsum("nhwpqv->nvhpwq", x)
-        imgs = x.reshape(shape=(x.shape[0], v, h * p, w * p))
-        return imgs
-    
     def forward (self, 
                  x: torch.Tensor,
                  mask: torch.Tensor = None,
@@ -142,6 +122,5 @@ class Stormer (nn.Module):
             x = block(x, cls_token)
 
         x = self.head(x, cls_token)
-        x = self.unpatchify(x)
 
         return x

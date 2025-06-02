@@ -27,7 +27,7 @@ class Attention (nn.Module):
         self.head_dim =  dim // heads
         self.scale =self.head_dim ** -0.5
 
-        self.to_qkv = nn.Linear(dim, dim * 3, bias = False)
+        self.qkv = nn.Linear(dim, dim * 3, bias = False)
         self.attn_drop = nn.Dropout(attn_drop)
         # Output projection and dropout
         self.proj = nn.Linear(dim, dim, bias = True)

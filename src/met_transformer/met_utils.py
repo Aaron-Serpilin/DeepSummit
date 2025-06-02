@@ -196,7 +196,7 @@ class WeatherDataset (Dataset):
         
         self.data = pd.read_csv(csv_file, parse_dates=True)
 
-        check_csv_features(csv_file=csv_file)
+        # check_csv_features(csv_file=csv_file)
 
         # Params
         self.target_column = target_column
