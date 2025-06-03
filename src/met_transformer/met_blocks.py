@@ -176,9 +176,13 @@ class FinalLayer (nn.Module):
         )
 
     def forward(self, x, c):
+        print(f"ForwardLayer x is: {x}\nForward layer c is: {c}\n")
         shift, scale = self.adaLN_modulation(c).chunk(2, dim=1)
+        print(f"Forward layer before modulate: {x}\n")
         x = modulate(self.norm_final(x), shift, scale)
+        print(f"Forward layer after modulate and before linear: {x}\n")
         x = self.linear(x)
+        print(f"Forward layer x after linear: {x}\n")
         return x
     
 class FeaturedWeightedEmbedding(nn.Module):
@@ -225,7 +229,7 @@ class FeaturedWeightedEmbedding(nn.Module):
         weight_tensor *= decay
         self.feature_weights = nn.Parameter(weight_tensor)  
         self.proj = nn.Linear(self.num_features, self.embed_dim)
-        self.cls_token = nn.Parameter(torch.zeros(1, 1, self.embed_dim))
+        self.cls_token = nn.Parameter(torch.ones(1, 1, embed_dim))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
 

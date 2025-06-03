@@ -95,10 +95,12 @@ class Stormer (nn.Module):
             nn.init.constant_(block.adaLN_modulation[-1].weight, 0)
             nn.init.constant_(block.adaLN_modulation[-1].bias, 0)
         
-        nn.init.constant_(self.head.adaLN_modulation[-1].weight, 0)
-        nn.init.constant_(self.head.adaLN_modulation[-1].bias, 0)
-        nn.init.constant_(self.head.linear.weight, 0)
-        nn.init.constant_(self.head.linear.bias, 0)
+        # The original model uses a zero-matrix which causes the final layer to collapse everything to zero
+        # Here we use custom values
+        # nn.init.constant_(self.head.adaLN_modulation[-1].weight, 0)
+        # nn.init.constant_(self.head.adaLN_modulation[-1].bias, 0)
+        # nn.init.constant_(self.head.linear.weight, 0)
+        # nn.init.constant_(self.head.linear.bias, 0)
 
 
     def forward (self, 
@@ -112,11 +114,11 @@ class Stormer (nn.Module):
         """
 
         # Embeds all features
-        print(f"x before self.embedding: {x}\n")
+        # print(f"x before self.embedding: {x}\n")
         x = self.embedding(x)
-        print(f"x after self.embedding: {x}\n")
+        # print(f"x after self.embedding: {x}\n")
         x = self.embed_norm_layer(x)
-        print(f"x after self.embed_norm_layer: {x}\n")
+        # print(f"x after self.embed_norm_layer: {x}\n")
         cls_token = x[:, 0]
 
         for block in self.blocks:
