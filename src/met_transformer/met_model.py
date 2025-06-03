@@ -71,7 +71,7 @@ class Stormer (nn.Module):
                 
             # Causes all in-place ops on module.weight to not complain about mutating a leaf that requires grad
             with torch.no_grad():
-
+                
                 l = norm_cdf((a - mean) / std)
                 u = norm_cdf((b - mean) / std)
                 tensor.uniform_(2 * l - 1, 2 * u - 1)
@@ -79,6 +79,7 @@ class Stormer (nn.Module):
                 tensor.mul_(std * math.sqrt(2.))
                 tensor.add_(mean)
                 tensor.clamp_(min=a, max=b)
+
             return tensor
 
 
@@ -101,10 +102,8 @@ class Stormer (nn.Module):
 
 
     def forward (self, 
-                 x: torch.Tensor,
-                 mask: torch.Tensor = None,
-                 target: torch.Tensor = None,
-                 window_mask: torch.Tensor = None):
+                 x: torch.Tensor
+                 ):
         
         """
         x:            Tensor   (B, T+1, F)  from WeatherDataset, already has CLS row.
@@ -113,14 +112,17 @@ class Stormer (nn.Module):
         """
 
         # Embeds all features
+        print(f"x before self.embedding: {x}\n")
         x = self.embedding(x)
+        print(f"x after self.embedding: {x}\n")
         x = self.embed_norm_layer(x)
-
+        print(f"x after self.embed_norm_layer: {x}\n")
         cls_token = x[:, 0]
 
         for block in self.blocks:
             x = block(x, cls_token)
-
+        print(f"x before self.head: {x}\n")
         x = self.head(x, cls_token)
+        print(f"x after self.head: {x}\n")
 
         return x

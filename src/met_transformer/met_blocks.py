@@ -132,6 +132,7 @@ class Block (nn.Module):
 
     def forward(self, x, c):
 
+        print(f"[cls] token for block forward pass is: {c}")
         shift_msa, scale_msa, gate_msa, shift_mlp, scale_mlp, gate_mlp = self.adaLN_modulation(c).chunk(6, dim=1)
 
         # Attention sub layer
@@ -145,7 +146,7 @@ class Block (nn.Module):
         z = modulate(z, shift_mlp, scale_mlp)
         z = self.mlp(z)
         x = x + gate_mlp.unsqueeze(1) * z
-        
+        print(f"Output x of the block forward pass: {x}\n")
         return x
     
 class FinalLayer (nn.Module):
