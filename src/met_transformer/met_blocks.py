@@ -229,7 +229,6 @@ class FeaturedWeightedEmbedding(nn.Module):
         weight_tensor *= decay
         self.feature_weights = nn.Parameter(weight_tensor)  
         self.proj = nn.Linear(self.num_features, self.embed_dim)
-        # self.cls_token = nn.Parameter(torch.ones(1, 1, embed_dim))
         self.cls_token = nn.Parameter(torch.empty(1, 1, embed_dim))
         nn.init.trunc_normal_(self.cls_token, mean=0., std=0.02, a=-0.04, b=0.04)
 

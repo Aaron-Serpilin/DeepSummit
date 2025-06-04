@@ -480,7 +480,7 @@ def load_era5_data (do_file_to_grib: bool = False,
 
   # Step 6
   if do_build_instances:
-     tabular_data_path = Path('data/himalayas_data/processed_himalaya_data.csv')
+     tabular_data_path = Path('data/himalayas_data/himalayas_data.csv')
      tabular_df = pd.read_csv(tabular_data_path, parse_dates=['SMTDATE'])
      return build_event_instances(tabular_df, merged_instances_path, n_context_days)
   

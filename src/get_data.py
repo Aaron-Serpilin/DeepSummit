@@ -16,7 +16,6 @@ base_request = {
         "2m_dewpoint_temperature",
         "2m_temperature",
         "mean_sea_level_pressure",
-        "sea_surface_temperature",
         "surface_pressure",
         "total_precipitation",
         "ice_temperature_layer_1",
