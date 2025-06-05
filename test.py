@@ -1,16 +1,123 @@
 import sys
-from pathlib import Path
-import torch
-import torchvision
-import matplotlib.pyplot as plt
-from tqdm.auto import tqdm
-# from dbfread import DBF
-# from torch.utils.tensorboard import SummaryWriter
-# import cdsapi
-import pandas as pd
-# from einops import rearrange, repeat
-# import pygrib
+import os
+import subprocess
 
+from torch import nn
+from torchvision import transforms
+
+try:
+    import torch
+    import torchvision
+    assert int(torch.__version__.split(".")[0]) >= 2, "torch version should be 2.+"
+    assert int(torchvision.__version__.split(".")[1]) >= 15, "torchvision version should be 0.15+"
+    print(f"torch version: {torch.__version__}")
+    print(f"torchvision version: {torchvision.__version__}")
+except (ImportError, AssertionError) as e:
+    print(f"[INFO] torch/torchvision versions not correct or missing: {e}")
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-U", "torch", "torchvision", "torchaudio", "--extra-index-url", "https://download.pytorch.org/whl/cu113"],
+        check=True
+    )
+    import torch
+    import torchvision
+    print(f"torch version: {torch.__version__}")
+    print(f"torchvision version: {torchvision.__version__}")
+
+# --- matplotlib ---
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    print("[INFO] Couldn't find matplotlib…installing it")
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "matplotlib"], check=True)
+    import matplotlib.pyplot as plt
+
+# --- torchinfo.summary ---
+try:
+    from torchinfo import summary
+except ImportError:
+    print("[INFO] Couldn't find torchinfo…installing it")
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "torchinfo"], check=True)
+    from torchinfo import summary
+
+# --- tqdm.auto.tqdm ---
+try:
+    from tqdm.auto import tqdm
+except ImportError:
+    print("[INFO] Couldn't find tqdm…installing it")
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "tqdm"], check=True)
+    from tqdm.auto import tqdm
+
+# (You had torchinfo twice; one import is enough.)
+
+# --- dbfread.DBF ---
+try:
+    from dbfread import DBF
+except ImportError:
+    print("[INFO] Couldn't find dbfread…installing it")
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "dbfread"], check=True)
+    from dbfread import DBF
+
+# --- torch.utils.tensorboard.SummaryWriter ---
+try:
+    from torch.utils.tensorboard import SummaryWriter
+except ImportError:
+    print("[INFO] Couldn't find tensorboard…installing it")
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "tensorboard"], check=True)
+    from torch.utils.tensorboard import SummaryWriter
+
+# --- torchmetrics, mlxtend ---
+try:
+    import torchmetrics, mlxtend
+    print(f"mlxtend version: {mlxtend.__version__}")
+    # ensure mlxtend ≥ 0.19
+    assert int(mlxtend.__version__.split(".")[1]) >= 19
+except (ImportError, AssertionError):
+    print("[INFO] Installing/upgrading torchmetrics and mlxtend")
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "torchmetrics", "-U", "mlxtend"], check=True)
+    import torchmetrics, mlxtend
+    print(f"mlxtend version: {mlxtend.__version__}")
+
+# --- cdsapi ---
+try:
+    import cdsapi
+except ImportError:
+    print("[INFO] Couldn't find cdsapi…installing it")
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "cdsapi"], check=True)
+    import cdsapi
+
+# --- pandas ---
+try:
+    import pandas as pd
+except ImportError:
+    print("[INFO] Couldn't find pandas…installing it")
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "pandas"], check=True)
+    import pandas as pd
+
+# --- einops.rearrange, einops.repeat ---
+try:
+    from einops import rearrange, repeat
+except ImportError:
+    print("[INFO] Couldn't find einops…installing it")
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "einops"], check=True)
+    from einops import rearrange, repeat
+
+# --- pygrib ---
+try:
+    import pygrib
+except ImportError:
+    print("[INFO] Couldn't find pygrib…installing it")
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "pygrib"], check=True)
+    import pygrib
+
+# Finally, if you need pathlib:
+import pathlib
+
+
+
+# In[2]:
+
+
+import sys
 sys.path.append("src")
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -73,6 +180,18 @@ weather_mapping = {
     'tcsw':  'Total column snow water'
 }
 
+met_weights = {
+    key: 1.2 
+    for key, description in weather_mapping.items()
+    if any(term in description.lower() for term in ("wind", "temperature", "pressure"))
+}
+
+priority_features = [key for key in met_weights]
+
+
+# In[3]:
+
+
 variables = [
         "10m_u_component_of_wind",
         "10m_v_component_of_wind",
@@ -129,16 +248,13 @@ variables = [
         "snowmelt",
         "temperature_of_snow_layer",
         "total_column_snow_water"
-]
+    ]
 
-met_weights = {
-    key: 1.2 
-    for key, description in weather_mapping.items()
-    if any(term in description.lower() for term in ("wind", "temperature", "pressure"))
-}
 
-priority_features = [key for key in met_weights]
+# In[4]:
 
+
+from pathlib import Path
 from src.helper_functions import set_seeds, set_data_splits, create_dataloaders
 from src.met_transformer.met_utils import WeatherDataset
 
@@ -170,7 +286,11 @@ weather_train_dataloader, weather_val_dataloader, weather_test_dataloader = crea
 
 )
 
-# weather_train_dataloader, weather_val_dataloader, weather_test_dataloader
+weather_train_dataloader, weather_val_dataloader, weather_test_dataloader
+
+
+# In[5]:
+
 
 offsets= range(0, 8)
 met_weights_with_offset = {
@@ -179,16 +299,35 @@ met_weights_with_offset = {
     for off in offsets
 }
 
+
+# In[6]:
+
+
 from src.met_transformer.met_model import Stormer
+
+# stormer = Stormer(img_size=[128, 256],
+#                   variables=variables,
+#                   met_weights=met_weights_with_offset,
+#                   patch_size=2,
+#                   hidden_size=1024,
+#                   depth=24,
+#                   num_heads=16,
+#                   mlp_ratio=4.0)
 
 stormer = Stormer(img_size=[128, 256],
                   variables=variables,
                   met_weights=met_weights_with_offset,
                   patch_size=2,
-                  hidden_size=1024,
-                  depth=24,
-                  num_heads=16,
+                  hidden_size=612,
+                  depth=20,
+                  num_heads=9,
                   mlp_ratio=4.0)
+
+stormer.to(device)
+
+
+# In[7]:
+
 
 from src.met_transformer.met_train import train_step, test_step
 
@@ -198,8 +337,10 @@ optimizer = torch.optim.AdamW(stormer.parameters(),lr=3e-4, betas=(0.9, 0.999), 
 
 X_test, mask_test, y_test, window_test = next(iter(weather_train_dataloader))
 output = stormer(X_test.to(device))
+# print(f"Full output: {output}")
+# print(f"Partial output: {output[:, 0, :]}")
 
-result = train_step(model=stormer,
+train_step(model=stormer,
            dataloader=weather_train_dataloader,
            loss_fn=loss_fn,
            optimizer=optimizer,
@@ -207,4 +348,12 @@ result = train_step(model=stormer,
            lambda_reg=1e-3
 )
 
-print(result)
+train_step
+
+# val_step = test_step(model=saint,
+#                      dataloader=weather_val_dataloader,
+#                      loss_fn=loss_fn,
+#                      device=device)
+
+# # val_step
+
