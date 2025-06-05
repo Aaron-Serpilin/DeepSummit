@@ -127,10 +127,10 @@ class WeatherDataset (Dataset):
         window_masks = self.window_masks
 
         # Convert arrays to torch tensors
-        X_tensor = torch.tensor(X)
+        X_tensor = torch.tensor(X, dtype=torch.float32)
         mask_tensor = torch.tensor(mask, dtype=torch.long)
-        target_tensor = torch.tensor(y)
-        window_mask_tensor = torch.tensor(window_masks)
+        target_tensor = torch.tensor(y, dtype=torch.long)
+        window_mask_tensor = torch.tensor(window_masks, dtype=torch.long)
 
         return X_tensor, mask_tensor, target_tensor, window_mask_tensor
 
