@@ -9,4 +9,4 @@
 module load cuda10.2/toolkit
 
 cd /var/scratch/ase347/DeepSummit
-/var/scratch/ase347/anaconda3/envs/deepsummit/bin/python main.py
+/var/scratch/ase347/anaconda3/envs/deepsummit/bin/python test.py
