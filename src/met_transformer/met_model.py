@@ -123,8 +123,8 @@ class Stormer (nn.Module):
 
         for block in self.blocks:
             x = block(x, cls_token)
-        print(f"x before self.head: {x}\n")
+        # print(f"x before self.head: {x}\n")
         x = self.head(x, cls_token)
-        print(f"x after self.head: {x}\n")
+        # print(f"x after self.head: {x}\n")
 
         return x

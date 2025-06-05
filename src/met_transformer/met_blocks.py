@@ -176,13 +176,13 @@ class FinalLayer (nn.Module):
         )
 
     def forward(self, x, c):
-        print(f"ForwardLayer x is: {x}\nForward layer c is: {c}\n")
+        # print(f"ForwardLayer x is: {x}\nForward layer c is: {c}\n")
         shift, scale = self.adaLN_modulation(c).chunk(2, dim=1)
-        print(f"Forward layer before modulate: {x}\n")
+        # print(f"Forward layer before modulate: {x}\n")
         x = modulate(self.norm_final(x), shift, scale)
-        print(f"Forward layer after modulate and before linear: {x}\n")
-        x = self.linear(x)
-        print(f"Forward layer x after linear: {x}\n")
+        # print(f"Forward layer after modulate and before linear: {x}\n")
+        # x = self.linear(x)
+        # print(f"Forward layer x after linear: {x}\n")
         return x
     
 class FeaturedWeightedEmbedding(nn.Module):
@@ -229,8 +229,10 @@ class FeaturedWeightedEmbedding(nn.Module):
         weight_tensor *= decay
         self.feature_weights = nn.Parameter(weight_tensor)  
         self.proj = nn.Linear(self.num_features, self.embed_dim)
-        self.cls_token = nn.Parameter(torch.empty(1, 1, embed_dim))
-        nn.init.trunc_normal_(self.cls_token, mean=0., std=0.02, a=-0.04, b=0.04)
+        # self.cls_token = nn.Parameter(torch.ones(1, 1, embed_dim))
+        self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
+        # self.cls_token = nn.Parameter(torch.empty(1, 1, embed_dim))
+        # nn.init.trunc_normal_(self.cls_token, mean=0., std=0.02, a=-0.04, b=0.04)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
 
