@@ -1,137 +1,15 @@
 import sys
 from pathlib import Path
-# import torch
-# import torchvision
-# import matplotlib.pyplot as plt
-# from tqdm.auto import tqdm
+import torch
+import torchvision
+import matplotlib.pyplot as plt
+from tqdm.auto import tqdm
 # from dbfread import DBF
-# from torch.utils.tensorboard import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 # import cdsapi
-# import pandas as pd
+import pandas as pd
 # from einops import rearrange, repeat
 # import pygrib
-
-# ─── torch & torchvision ───────────────────────────────────────────────────────
-try:
-    import torch
-    import torchvision
-
-    # Enforce minimum versions: torch ≥ 2.0, torchvision ≥ 0.15
-    torch_major = int(torch.__version__.split(".")[0])
-    torchvision_minor = int(torchvision.__version__.split(".")[1])
-    if torch_major < 2:
-        raise ImportError(f"Installed torch version {torch.__version__} is too old. Needs ≥ 2.0.")
-    if torchvision_minor < 15:
-        raise ImportError(f"Installed torchvision version {torchvision.__version__} is too old. Needs ≥ 0.15.")
-
-    print(f"torch version: {torch.__version__}")
-    print(f"torchvision version: {torchvision.__version__}")
-
-except ImportError as e:
-    print("[ERROR] torch/torchvision error:", e)
-    print("Please install or upgrade with:")
-    print("    pip install -U torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu113")
-    sys.exit(1)
-
-# ─── matplotlib ────────────────────────────────────────────────────────────────
-try:
-    import matplotlib.pyplot as plt
-except ImportError:
-    print("[ERROR] matplotlib is not installed.")
-    print("Please install with:")
-    print("    pip install matplotlib")
-    sys.exit(1)
-
-# ─── torchinfo (formerly torchsummary) ─────────────────────────────────────────
-try:
-    from torchinfo import summary
-except ImportError:
-    print("[ERROR] torchinfo is not installed.")
-    print("Please install with:")
-    print("    pip install torchinfo")
-    sys.exit(1)
-
-# ─── tqdm ───────────────────────────────────────────────────────────────────────
-try:
-    from tqdm.auto import tqdm
-except ImportError:
-    print("[ERROR] tqdm is not installed.")
-    print("Please install with:")
-    print("    pip install tqdm")
-    sys.exit(1)
-
-# ─── dbfread ────────────────────────────────────────────────────────────────────
-try:
-    from dbfread import DBF
-except ImportError:
-    print("[ERROR] dbfread is not installed.")
-    print("Please install with:")
-    print("    pip install dbfread")
-    sys.exit(1)
-
-# ─── TensorBoard SummaryWriter ─────────────────────────────────────────────────
-try:
-    from torch.utils.tensorboard import SummaryWriter
-except ImportError:
-    print("[ERROR] torch.utils.tensorboard (TensorBoard) is not installed.")
-    print("Please install with:")
-    print("    pip install tensorboard")
-    sys.exit(1)
-
-# ─── torchmetrics & mlxtend ─────────────────────────────────────────────────────
-try:
-    import torchmetrics
-    import mlxtend
-
-    # Example version check for mlxtend
-    mlxtend_version = mlxtend.__version__.split(".")
-    mlxtend_minor = int(mlxtend_version[1])
-    if mlxtend_minor < 19:
-        raise ImportError(f"Installed mlxtend version {mlxtend.__version__} is too old. Needs ≥ 0.19.")
-
-    print(f"mlxtend version: {mlxtend.__version__}")
-
-except ImportError as e:
-    print("[ERROR] torchmetrics or mlxtend error:", e)
-    print("Please install or upgrade with:")
-    print("    pip install torchmetrics mlxtend")
-    sys.exit(1)
-
-# ─── cdsapi ─────────────────────────────────────────────────────────────────────
-try:
-    import cdsapi
-except ImportError:
-    print("[ERROR] cdsapi is not installed.")
-    print("Please install with:")
-    print("    pip install cdsapi")
-    sys.exit(1)
-
-# ─── pandas ────────────────────────────────────────────────────────────────────
-try:
-    import pandas as pd
-except ImportError:
-    print("[ERROR] pandas is not installed.")
-    print("Please install with:")
-    print("    pip install pandas")
-    sys.exit(1)
-
-# ─── einops ─────────────────────────────────────────────────────────────────────
-try:
-    from einops import rearrange, repeat
-except ImportError:
-    print("[ERROR] einops is not installed.")
-    print("Please install with:")
-    print("    pip install einops")
-    sys.exit(1)
-
-# ─── pygrib ─────────────────────────────────────────────────────────────────────
-try:
-    import pygrib
-except ImportError:
-    print("[ERROR] pygrib is not installed.")
-    print("Please install with:")
-    print("    pip install pygrib")
-    sys.exit(1)
 
 sys.path.append("src")
 
