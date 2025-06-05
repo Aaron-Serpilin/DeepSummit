@@ -6,7 +6,7 @@
 #SBATCH -p proq
 #SBATCH --gres=gpu:1
 
-module load cuda10.2/toolkit
+module load cuda10.1/toolkit/10.1.243
 
 cd /var/scratch/ase347/DeepSummit
 /var/scratch/ase347/anaconda3/envs/deepsummit/bin/python test.py
