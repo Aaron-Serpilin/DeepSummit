@@ -28,7 +28,7 @@ def train_step(
 
     model.train()
 
-    train_loss, train_acc, skipped_batches = 0, 0, 0
+    train_loss, train_acc, valid_batches = 0, 0, 0
 
     for batch, data in enumerate(dataloader):
 
@@ -44,7 +44,7 @@ def train_step(
             print(f"[TRAIN] Skipping batch {batch} because output contains NaNs (avoiding matrix collapse)")
             continue
 
-        skipped_batches += 1
+        valid_batches += 1
         y_pred = full_seq_pred[:, 0, :] # shape (B, D_out)
 
         # Regularization for mask and weights precedence initialization
@@ -61,8 +61,8 @@ def train_step(
         y_pred_class = torch.argmax(torch.softmax(y_pred, dim=1), dim=1)
         train_acc += (y_pred_class == y_true).sum().item()/len(y_pred)
 
-    train_loss /= (len(dataloader) - skipped_batches)
-    train_acc /= (len(dataloader) - skipped_batches)
+    train_loss /= valid_batches
+    train_acc /= valid_batches
     return train_loss, train_acc
 
 
@@ -83,7 +83,7 @@ def test_step(
 
     model.eval()
 
-    test_loss, test_acc, skipped_batches = 0, 0, 0
+    test_loss, test_acc, valid_batches = 0, 0, 0
 
     with torch.inference_mode():
 
@@ -99,7 +99,7 @@ def test_step(
                 print(f"[TEST] Skipping batch {batch} because output contains NaNs (avoiding matrix collapse)")
                 continue
 
-            skipped_batches += 1
+            valid_batches += 1
 
             y_pred = full_seq_pred[:, 0, :]
 
@@ -110,8 +110,8 @@ def test_step(
             test_pred_labels = y_pred.argmax(dim=1)
             test_acc += ((test_pred_labels == y_true).sum().item()/len(test_pred_labels))
             
-    test_loss /= (len(dataloader) - skipped_batches)
-    test_acc /= (len(dataloader) - skipped_batches)
+    test_loss /= valid_batches
+    test_acc /= valid_batches
     return test_loss, test_acc
     
 def train(
