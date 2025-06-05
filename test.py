@@ -7,11 +7,6 @@ from pathlib import Path
 from torch import nn
 from torchvision import transforms
 
-from src.met_transformer.met_train import train_step, test_step
-from src.helper_functions import set_seeds, set_data_splits, create_dataloaders
-from src.met_transformer.met_utils import WeatherDataset
-from src.met_transformer.met_model import Stormer
-
 try:
     import torch
     import torchvision
@@ -113,6 +108,11 @@ except ImportError:
     print("[INFO] Couldn't find pygrib…installing it")
     subprocess.run([sys.executable, "-m", "pip", "install", "-q", "pygrib"], check=True)
     import pygrib
+
+from src.met_transformer.met_train import train_step, test_step
+from src.helper_functions import set_seeds, set_data_splits, create_dataloaders
+from src.met_transformer.met_utils import WeatherDataset
+from src.met_transformer.met_model import Stormer
 
 
 sys.path.append("src")
