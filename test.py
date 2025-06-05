@@ -1,9 +1,16 @@
 import sys
 import os
 import subprocess
+import pathlib
+from pathlib import Path
 
 from torch import nn
 from torchvision import transforms
+
+from src.met_transformer.met_train import train_step, test_step
+from src.helper_functions import set_seeds, set_data_splits, create_dataloaders
+from src.met_transformer.met_utils import WeatherDataset
+from src.met_transformer.met_model import Stormer
 
 try:
     import torch
@@ -46,8 +53,6 @@ except ImportError:
     print("[INFO] Couldn't find tqdm…installing it")
     subprocess.run([sys.executable, "-m", "pip", "install", "-q", "tqdm"], check=True)
     from tqdm.auto import tqdm
-
-# (You had torchinfo twice; one import is enough.)
 
 # --- dbfread.DBF ---
 try:
@@ -109,18 +114,11 @@ except ImportError:
     subprocess.run([sys.executable, "-m", "pip", "install", "-q", "pygrib"], check=True)
     import pygrib
 
-# Finally, if you need pathlib:
-import pathlib
 
-
-
-# In[2]:
-
-
-import sys
 sys.path.append("src")
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
+print(f"Device is: {device}\n")
 
 weather_mapping = {
     '10u':   '10 metre U wind component',
@@ -188,10 +186,6 @@ met_weights = {
 
 priority_features = [key for key in met_weights]
 
-
-# In[3]:
-
-
 variables = [
         "10m_u_component_of_wind",
         "10m_v_component_of_wind",
@@ -250,14 +244,6 @@ variables = [
         "total_column_snow_water"
     ]
 
-
-# In[4]:
-
-
-from pathlib import Path
-from src.helper_functions import set_seeds, set_data_splits, create_dataloaders
-from src.met_transformer.met_utils import WeatherDataset
-
 set_seeds(42)
 
 splits_path = Path("data/era5_data")
@@ -286,11 +272,7 @@ weather_train_dataloader, weather_val_dataloader, weather_test_dataloader = crea
 
 )
 
-weather_train_dataloader, weather_val_dataloader, weather_test_dataloader
-
-
-# In[5]:
-
+print(f"Weather train dataloader: {weather_train_dataloader}\nWeather val dataloader: {weather_val_dataloader}\nWeather test dataloader: {weather_test_dataloader}\n")
 
 offsets= range(0, 8)
 met_weights_with_offset = {
@@ -299,37 +281,16 @@ met_weights_with_offset = {
     for off in offsets
 }
 
-
-# In[6]:
-
-
-from src.met_transformer.met_model import Stormer
-
-# stormer = Stormer(img_size=[128, 256],
-#                   variables=variables,
-#                   met_weights=met_weights_with_offset,
-#                   patch_size=2,
-#                   hidden_size=1024,
-#                   depth=24,
-#                   num_heads=16,
-#                   mlp_ratio=4.0)
-
 stormer = Stormer(img_size=[128, 256],
                   variables=variables,
                   met_weights=met_weights_with_offset,
                   patch_size=2,
-                  hidden_size=612,
-                  depth=20,
-                  num_heads=9,
+                  hidden_size=1024,
+                  depth=24,
+                  num_heads=16,
                   mlp_ratio=4.0)
 
 stormer.to(device)
-
-
-# In[7]:
-
-
-from src.met_transformer.met_train import train_step, test_step
 
 # Hyperparameters pulled from the paper
 loss_fn = nn.CrossEntropyLoss()
@@ -337,23 +298,12 @@ optimizer = torch.optim.AdamW(stormer.parameters(),lr=3e-4, betas=(0.9, 0.999), 
 
 X_test, mask_test, y_test, window_test = next(iter(weather_train_dataloader))
 output = stormer(X_test.to(device))
-# print(f"Full output: {output}")
-# print(f"Partial output: {output[:, 0, :]}")
 
-train_step(model=stormer,
+result = train_step(model=stormer,
            dataloader=weather_train_dataloader,
            loss_fn=loss_fn,
            optimizer=optimizer,
            device=device,
            lambda_reg=1e-3
 )
-
-train_step
-
-# val_step = test_step(model=saint,
-#                      dataloader=weather_val_dataloader,
-#                      loss_fn=loss_fn,
-#                      device=device)
-
-# # val_step
-
+print(result)

@@ -38,7 +38,6 @@ def train_step(
         X, mask, y_true, window_mask = X.to(device), mask.to(device), y_true.to(device), window_mask.to(device)
 
         # Forward pass
-        # print(f"X is: {X}")
         full_seq_pred = model(X) # shape (B, T + 1, D_out)
 
         if torch.isnan(full_seq_pred).any():
@@ -46,7 +45,6 @@ def train_step(
             continue
 
         skipped_batches += 1
-
         y_pred = full_seq_pred[:, 0, :] # shape (B, D_out)
 
         # Regularization for mask and weights precedence initialization
