@@ -1,3 +1,2 @@
 data/era5_data/era5_data.csv filter=lfs diff=lfs merge=lfs -text
 data/era5_data/train/train.csv filter=lfs diff=lfs merge=lfs -text
-DeepSummit/runs/DAS5_runs/** filter=lfs diff=lfs merge=lfs -text
