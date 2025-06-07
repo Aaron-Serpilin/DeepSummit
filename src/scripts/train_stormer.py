@@ -109,13 +109,12 @@ except ImportError:
     subprocess.run([sys.executable, "-m", "pip", "install", "-q", "pygrib"], check=True)
     import pygrib
 
+sys.path.append("src")
+
 from src.met_transformer.met_train import train_step, test_step, train
 from src.helper_functions import set_seeds, set_data_splits, create_dataloaders, plot_loss_curves, save_model, create_writer
 from src.met_transformer.met_utils import WeatherDataset
 from src.met_transformer.met_model import Stormer
-
-
-sys.path.append("src")
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Device is: {device}\n")
