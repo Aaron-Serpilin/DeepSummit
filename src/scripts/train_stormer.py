@@ -4,9 +4,6 @@ import subprocess
 import pathlib
 from pathlib import Path
 
-from torch import nn
-from torchvision import transforms
-
 try:
     import torch
     import torchvision
@@ -112,6 +109,9 @@ except ImportError:
 script_dir    = os.path.dirname(__file__)           
 project_root  = os.path.abspath(os.path.join(script_dir, os.pardir, os.pardir))
 sys.path.insert(0, project_root)
+
+from torch import nn
+from torchvision import transforms
 
 from src.met_transformer.met_train import train_step, test_step, train
 from src.helper_functions import set_seeds, set_data_splits, create_dataloaders, plot_loss_curves, save_model, create_writer
