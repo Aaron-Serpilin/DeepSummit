@@ -127,7 +127,7 @@ from torch import nn
 from torchvision import transforms
 
 from src.tab_transformer.tab_train import train_step, test_step, train
-from src.helper_functions import set_seeds, set_data_splits, create_dataloaders, plot_loss_curves, save_model
+from src.helper_functions import set_seeds, set_data_splits, create_dataloaders, plot_loss_curves, save_model, create_writer
 from src.tab_transformer.tab_utils import TabularDataset
 from src.tab_transformer.tab_model import SAINT
 
@@ -168,6 +168,10 @@ tabular_train_dataloader, tabular_val_dataloader, tabular_test_dataloader = crea
     )
 
 print(f"Tabular train dataloader: {tabular_train_dataloader}\nTabular val dataloader: {tabular_val_dataloader}\nTabular test dataloader: {tabular_test_dataloader}\n")
+
+himalayan_train_dir = splits_path / "train"
+himalayan_train_file = himalayan_train_dir / "train.csv"
+df_train = pd.read_csv(himalayan_train_file)
 
 categorical_columns = ['SEX', 'CITIZEN', 'STATUS', 'MO2USED', 'MROUTE1', 'SEASON', 'O2USED']
 continuous_columns = ['CALCAGE', 'HEIGHTM', 'MDEATHS', 'HDEATHS', 'SMTMEMBERS', 'SMTHIRED']
