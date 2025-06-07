@@ -109,8 +109,8 @@ except ImportError:
     subprocess.run([sys.executable, "-m", "pip", "install", "-q", "pygrib"], check=True)
     import pygrib
 
-from src.met_transformer.met_train import train_step, test_step
-from src.helper_functions import set_seeds, set_data_splits, create_dataloaders
+from src.met_transformer.met_train import train_step, test_step, train
+from src.helper_functions import set_seeds, set_data_splits, create_dataloaders, plot_loss_curves, save_model
 from src.met_transformer.met_utils import WeatherDataset
 from src.met_transformer.met_model import Stormer
 
@@ -293,17 +293,56 @@ stormer = Stormer(img_size=[128, 256],
 stormer.to(device)
 
 # Hyperparameters pulled from the paper
+# loss_fn = nn.CrossEntropyLoss()
+# optimizer = torch.optim.AdamW(stormer.parameters(),lr=3e-4, betas=(0.9, 0.999), weight_decay=1e-2)
+
+# X_test, mask_test, y_test, window_test = next(iter(weather_train_dataloader))
+# output = stormer(X_test.to(device))
+
+# result = train_step(model=stormer,
+#            dataloader=weather_train_dataloader,
+#            loss_fn=loss_fn,
+#            optimizer=optimizer,
+#            device=device,
+#            lambda_reg=1e-3
+# )
+# print(result)
+
+def create_writer(experiment_name: str,
+                  model_name: str,
+                  extra: str=None) -> torch.utils.tensorboard.writer.SummaryWriter():
+
+                  from datetime import datetime
+                  import os
+
+                  timestamp = datetime.now().strftime("%Y-%m-%d--%H:%M:%S")
+
+                  if extra:
+                       log_dir = os.path.join("runs", timestamp, experiment_name, model_name, extra) # Create the log directory path
+                  else:
+                       log_dir = os.path.join("runs", timestamp, experiment_name, model_name) # Create the log directory path
+
+                  print(f"[INFO] Created SummaryWriter, saving to: {log_dir}")
+                  return SummaryWriter(log_dir=log_dir)
+
+
+
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.AdamW(stormer.parameters(),lr=3e-4, betas=(0.9, 0.999), weight_decay=1e-2)
 
-X_test, mask_test, y_test, window_test = next(iter(weather_train_dataloader))
-output = stormer(X_test.to(device))
+stormer_results = train(model=stormer,
+                train_dataloader=weather_train_dataloader,
+                val_dataloader=weather_val_dataloader,
+                test_dataloader=weather_test_dataloader,
+                optimizer=optimizer,
+                loss_fn=loss_fn,
+                epochs=50,
+                writer=create_writer(experiment_name="first_training_run_saint",
+                                    model_name=stormer,
+                                    extra=f"{epoch}_epochs"))
 
-result = train_step(model=stormer,
-           dataloader=weather_train_dataloader,
-           loss_fn=loss_fn,
-           optimizer=optimizer,
-           device=device,
-           lambda_reg=1e-3
-)
-print(result)
+plot_loss_curves(stormer_results)
+
+save_model(stormer,
+          "/var/scratch/ase347/DeepSummit/checkpoints",
+          "stormer_epoch50.pth")
