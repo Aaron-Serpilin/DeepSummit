@@ -293,22 +293,6 @@ stormer = Stormer(img_size=[128, 256],
 
 stormer.to(device)
 
-# Hyperparameters pulled from the paper
-# loss_fn = nn.CrossEntropyLoss()
-# optimizer = torch.optim.AdamW(stormer.parameters(),lr=3e-4, betas=(0.9, 0.999), weight_decay=1e-2)
-
-# X_test, mask_test, y_test, window_test = next(iter(weather_train_dataloader))
-# output = stormer(X_test.to(device))
-
-# result = train_step(model=stormer,
-#            dataloader=weather_train_dataloader,
-#            loss_fn=loss_fn,
-#            optimizer=optimizer,
-#            device=device,
-#            lambda_reg=1e-3
-# )
-# print(result)
-
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.AdamW(stormer.parameters(),lr=3e-4, betas=(0.9, 0.999), weight_decay=1e-2)
 
