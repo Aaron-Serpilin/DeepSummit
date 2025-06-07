@@ -103,7 +103,7 @@ class TabularDataset(Dataset):
         # Convert arrays to torch tensors
         cat_tensor = torch.tensor(cat_instance_with_cls, dtype=torch.long)
         con_tensor = torch.tensor(con_instance, dtype=torch.float)
-        target_tensor = torch.tensor(target_instance)
+        target_tensor = torch.tensor(target_instance, dtype=torch.long)
         cat_mask_tensor = torch.tensor(cat_mask_with_cls, dtype=torch.long)
         con_mask_tensor = torch.tensor(con_mask_instance, dtype=torch.long)
         
