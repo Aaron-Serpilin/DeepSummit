@@ -337,9 +337,9 @@ stormer_results = train(model=stormer,
                 optimizer=optimizer,
                 loss_fn=loss_fn,
                 epochs=50,
-                writer=create_writer(experiment_name="first_training_run_saint",
+                writer=create_writer(experiment_name="first_training_run_stormer",
                                     model_name=stormer,
-                                    extra=f"{epoch}_epochs"))
+                                    extra="50_epochs"))
 
 plot_loss_curves(stormer_results)
 
