@@ -143,7 +143,8 @@ def create_dataloaders (dataset_class: Type,
     return (train_dataloader, val_dataloader, test_dataloader)
 
 def plot_loss_curves(results):
-    """Plots training curves of a results dictionary.
+    """
+    Plots training curves of a results dictionary.
 
     Args:
         results (dict): dictionary containing list of values, e.g.
@@ -184,10 +185,9 @@ def plot_loss_curves(results):
     plt.xlabel("Epochs")
     plt.legend()
 
-def save_model(
-    model: torch.nn.Module, # model to save
-    target_dir: str, # directory for saving the model to
-    model_name: str # filename for the saved model. Should include either ".pth" or ".pt" as the file extension
+def save_model(model: torch.nn.Module, # model to save
+               target_dir: str, # directory for saving the model to
+               model_name: str # filename for the saved model. Should include either ".pth" or ".pt" as the file extension
     ):
 
     """ 
@@ -207,31 +207,31 @@ def create_writer(experiment_name: str,
                   model_name: str,
                   extra: str=None) -> torch.utils.tensorboard.writer.SummaryWriter():
 
-                   """
-                    Create and return a TensorBoard SummaryWriter that logs to a timestamped directory.
+    """
+    Create and return a TensorBoard SummaryWriter that logs to a timestamped directory.
 
-                    The logs will be organized under:
-                        runs/{timestamp}/{experiment_name}/{model_name}/[extra]
+    The logs will be organized under:
+        runs/{timestamp}/{experiment_name}/{model_name}/[extra]
 
-                    Args:
-                        experiment_name (str): A descriptive name for the experiment
-                        model_name (str): The model variant 
-                        extra (str, optional): Extra information
+    Args:
+        experiment_name (str): A descriptive name for the experiment
+        model_name (str): The model variant 
+        extra (str, optional): Extra information
 
-                    Returns:
-                        SummaryWriter:
-                            A TensorBoard writer instance writing into the constructed log directory.
-                    """
+    Returns:
+        SummaryWriter:
+            A TensorBoard writer instance writing into the constructed log directory.
+    """
 
-                  from datetime import datetime
-                  import os
+    from datetime import datetime
+    import os
 
-                  timestamp = datetime.now().strftime("%Y-%m-%d--%H:%M:%S")
+    timestamp = datetime.now().strftime("%Y-%m-%d--%H:%M:%S")
 
-                  if extra:
-                       log_dir = os.path.join("runs", timestamp, experiment_name, model_name, extra) # Create the log directory path
-                  else:
-                       log_dir = os.path.join("runs", timestamp, experiment_name, model_name) # Create the log directory path
+    if extra:
+        log_dir = os.path.join("runs", timestamp, experiment_name, model_name, extra) # Create the log directory path
+    else:
+        log_dir = os.path.join("runs", timestamp, experiment_name, model_name) # Create the log directory path
 
-                  print(f"[INFO] Created SummaryWriter, saving to: {log_dir}")
-                  return SummaryWriter(log_dir=log_dir)
+    print(f"[INFO] Created SummaryWriter, saving to: {log_dir}")
+    return SummaryWriter(log_dir=log_dir)
