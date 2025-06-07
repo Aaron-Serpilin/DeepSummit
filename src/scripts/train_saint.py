@@ -4,9 +4,6 @@ import subprocess
 import pathlib
 from pathlib import Path
 
-from torch import nn
-from torchvision import transforms
-
 try:
     import torch
     import torchvision
@@ -109,13 +106,17 @@ except ImportError:
     subprocess.run([sys.executable, "-m", "pip", "install", "-q", "pygrib"], check=True)
     import pygrib
 
+script_dir    = os.path.dirname(__file__)           
+project_root  = os.path.abspath(os.path.join(script_dir, os.pardir, os.pardir))
+sys.path.insert(0, project_root)
+
+from torch import nn
+from torchvision import transforms
+
 from src.tab_transformer.tab_train import train_step, test_step, train
 from src.helper_functions import set_seeds, set_data_splits, create_dataloaders, plot_loss_curves, save_model
 from src.tab_transformer.tab_utils import TabularDataset
 from src.tab_transformer.tab_model import SAINT
-
-
-sys.path.append("src")
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Device is: {device}\n")
