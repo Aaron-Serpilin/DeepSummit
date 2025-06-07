@@ -13,6 +13,7 @@ from typing import Type, Tuple, Dict, Any
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
 
 # Scikit-Learn for Data Splitting and Other Utilities
 from sklearn.model_selection import train_test_split
