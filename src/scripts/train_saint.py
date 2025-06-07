@@ -106,6 +106,19 @@ except ImportError:
     subprocess.run([sys.executable, "-m", "pip", "install", "-q", "pygrib"], check=True)
     import pygrib
 
+# --- numpy as np ---
+try:
+    import numpy as np
+    print(f"numpy version: {np.__version__}")
+except ImportError:
+    print("[INFO] Couldn't find numpy…installing it")
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "-q", "numpy"],
+        check=True
+    )
+    import numpy as np
+    print(f"numpy version: {np.__version__}")
+
 script_dir    = os.path.dirname(__file__)           
 project_root  = os.path.abspath(os.path.join(script_dir, os.pardir, os.pardir))
 sys.path.insert(0, project_root)
