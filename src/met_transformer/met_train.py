@@ -182,7 +182,7 @@ def train(
         results["test_acc"].append(test_acc)
 
         if writer:
-          writer.add_scalars(
+            writer.add_scalars(
                 main_tag="Loss",
                 tag_scalar_dict= {
                     "train": results["train_loss"][-1],
