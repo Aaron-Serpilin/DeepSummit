@@ -96,7 +96,7 @@ def test_step(
             full_seq_pred = model(X)
 
             if torch.isnan(full_seq_pred).any():
-                print(f"[TEST] Skipping batch {batch} because output contains NaNs (avoiding matrix collapse)")
+                # print(f"[TEST] Skipping batch {batch} because output contains NaNs (avoiding matrix collapse)")
                 continue
 
             valid_batches += 1
