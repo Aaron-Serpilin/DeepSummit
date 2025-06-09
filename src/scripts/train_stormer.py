@@ -305,12 +305,12 @@ stormer_results = train(model=stormer,
                 optimizer=optimizer,
                 loss_fn=loss_fn,
                 epochs=75,
-                writer=create_writer(experiment_name="first_training_run_stormer",
+                writer=create_writer(experiment_name="stormer_run",
                                     model_name="stormer",
-                                    extra="75_epochs"))
+                                    extra="75_epochs_lr_3e-4"))
 
 plot_loss_curves(stormer_results)
 
 save_model(stormer,
           "/var/scratch/ase347/DeepSummit/checkpoints",
-          "stormer_epoch75.pth")
+          "stormer_epoch75_lr_3e-4.pth")
