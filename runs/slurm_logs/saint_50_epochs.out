@@ -1,0 +1,90 @@
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.0.1 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "/var/scratch/ase347/DeepSummit/src/scripts/train_saint.py", line 9, in <module>
+    import torchvision
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/__init__.py", line 6, in <module>
+    from torchvision import datasets, io, models, ops, transforms, utils
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/__init__.py", line 17, in <module>
+    from . import detection, optical_flow, quantization, segmentation, video
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/detection/__init__.py", line 1, in <module>
+    from .faster_rcnn import *
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/detection/faster_rcnn.py", line 16, in <module>
+    from .anchor_utils import AnchorGenerator
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/detection/anchor_utils.py", line 10, in <module>
+    class AnchorGenerator(nn.Module):
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/detection/anchor_utils.py", line 63, in AnchorGenerator
+    device: torch.device = torch.device("cpu"),
+/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/detection/anchor_utils.py:63: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /opt/conda/conda-bld/pytorch_1682343904639/work/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device("cpu"),
+torch version: 2.0.1
+torchvision version: 0.15.2
+mlxtend version: 0.23.4
+numpy version: 2.0.1
+Device is: cpu
+
+[INFO] Data splits already exist under data/himalayas_data. Skipping split.
+Tabular train dataloader: <torch.utils.data.dataloader.DataLoader object at 0x7f67851394e0>
+Tabular val dataloader: <torch.utils.data.dataloader.DataLoader object at 0x7f67851399f0>
+Tabular test dataloader: <torch.utils.data.dataloader.DataLoader object at 0x7f6785139ab0>
+
+[INFO] Created SummaryWriter, saving to: runs/2025-06-09--16:39:18/first_training_run_saint/saint/50_epochs
+  0%|          | 0/50 [00:00<?, ?it/s]  2%|▏         | 1/50 [03:03<2:29:58, 183.63s/it]Epoch: 1 | train_loss: 0.2092 | train_acc: 0.9151 | val_loss: 0.2148 | val_acc: 0.9132 | test_loss: 0.2174 | test_acc: 0.9119
+  4%|▍         | 2/50 [05:48<2:18:08, 172.69s/it]Epoch: 2 | train_loss: 0.1891 | train_acc: 0.9239 | val_loss: 0.2144 | val_acc: 0.9107 | test_loss: 0.2121 | test_acc: 0.9181
+  6%|▌         | 3/50 [08:31<2:11:53, 168.37s/it]Epoch: 3 | train_loss: 0.1840 | train_acc: 0.9262 | val_loss: 0.2071 | val_acc: 0.9213 | test_loss: 0.2052 | test_acc: 0.9134
+  8%|▊         | 4/50 [11:15<2:07:43, 166.60s/it]Epoch: 4 | train_loss: 0.1809 | train_acc: 0.9280 | val_loss: 0.2384 | val_acc: 0.9107 | test_loss: 0.2325 | test_acc: 0.9079
+ 10%|█         | 5/50 [13:57<2:03:33, 164.74s/it]Epoch: 5 | train_loss: 0.1789 | train_acc: 0.9281 | val_loss: 0.2202 | val_acc: 0.9057 | test_loss: 0.2142 | test_acc: 0.9132
+ 12%|█▏        | 6/50 [16:46<2:02:01, 166.40s/it]Epoch: 6 | train_loss: 0.1759 | train_acc: 0.9291 | val_loss: 0.2132 | val_acc: 0.9168 | test_loss: 0.2100 | test_acc: 0.9157
+ 14%|█▍        | 7/50 [19:27<1:57:50, 164.43s/it]Epoch: 7 | train_loss: 0.1726 | train_acc: 0.9308 | val_loss: 0.2204 | val_acc: 0.9139 | test_loss: 0.2269 | test_acc: 0.9102
+ 16%|█▌        | 8/50 [22:07<1:54:16, 163.25s/it]Epoch: 8 | train_loss: 0.1707 | train_acc: 0.9306 | val_loss: 0.2232 | val_acc: 0.9106 | test_loss: 0.2177 | test_acc: 0.9109
+ 18%|█▊        | 9/50 [25:05<1:54:42, 167.87s/it]Epoch: 9 | train_loss: 0.1669 | train_acc: 0.9322 | val_loss: 0.2205 | val_acc: 0.9136 | test_loss: 0.2195 | test_acc: 0.9104
+ 20%|██        | 10/50 [27:57<1:52:45, 169.13s/it]Epoch: 10 | train_loss: 0.1657 | train_acc: 0.9341 | val_loss: 0.2522 | val_acc: 0.8968 | test_loss: 0.2394 | test_acc: 0.9000
+ 22%|██▏       | 11/50 [30:38<1:48:15, 166.56s/it]Epoch: 11 | train_loss: 0.1594 | train_acc: 0.9357 | val_loss: 0.2379 | val_acc: 0.9041 | test_loss: 0.2429 | test_acc: 0.9012
+ 24%|██▍       | 12/50 [33:24<1:45:18, 166.27s/it]Epoch: 12 | train_loss: 0.1574 | train_acc: 0.9365 | val_loss: 0.2190 | val_acc: 0.9143 | test_loss: 0.2197 | test_acc: 0.9123
+ 26%|██▌       | 13/50 [36:04<1:41:29, 164.58s/it]Epoch: 13 | train_loss: 0.1556 | train_acc: 0.9383 | val_loss: 0.2532 | val_acc: 0.9021 | test_loss: 0.2420 | test_acc: 0.9019
+ 28%|██▊       | 14/50 [38:45<1:37:58, 163.30s/it]Epoch: 14 | train_loss: 0.1492 | train_acc: 0.9401 | val_loss: 0.2592 | val_acc: 0.9038 | test_loss: 0.2575 | test_acc: 0.9028
+ 30%|███       | 15/50 [41:33<1:36:02, 164.63s/it]Epoch: 15 | train_loss: 0.1471 | train_acc: 0.9410 | val_loss: 0.2414 | val_acc: 0.9083 | test_loss: 0.2515 | test_acc: 0.9079
+ 32%|███▏      | 16/50 [44:24<1:34:25, 166.62s/it]Epoch: 16 | train_loss: 0.1445 | train_acc: 0.9425 | val_loss: 0.2704 | val_acc: 0.9098 | test_loss: 0.2698 | test_acc: 0.9098
+ 34%|███▍      | 17/50 [47:08<1:31:13, 165.85s/it]Epoch: 17 | train_loss: 0.1407 | train_acc: 0.9433 | val_loss: 0.2779 | val_acc: 0.8992 | test_loss: 0.2855 | test_acc: 0.8957
+ 36%|███▌      | 18/50 [49:47<1:27:26, 163.96s/it]Epoch: 18 | train_loss: 0.1372 | train_acc: 0.9453 | val_loss: 0.2963 | val_acc: 0.9102 | test_loss: 0.3009 | test_acc: 0.9044
+ 38%|███▊      | 19/50 [52:31<1:24:44, 164.00s/it]Epoch: 19 | train_loss: 0.1363 | train_acc: 0.9448 | val_loss: 0.3039 | val_acc: 0.8996 | test_loss: 0.2971 | test_acc: 0.8981
+ 40%|████      | 20/50 [55:16<1:22:04, 164.16s/it]Epoch: 20 | train_loss: 0.1321 | train_acc: 0.9473 | val_loss: 0.3310 | val_acc: 0.9044 | test_loss: 0.3150 | test_acc: 0.9028
+ 42%|████▏     | 21/50 [58:03<1:19:42, 164.93s/it]Epoch: 21 | train_loss: 0.1332 | train_acc: 0.9472 | val_loss: 0.2922 | val_acc: 0.9083 | test_loss: 0.2898 | test_acc: 0.9085
+ 44%|████▍     | 22/50 [1:00:43<1:16:19, 163.54s/it]Epoch: 22 | train_loss: 0.1268 | train_acc: 0.9490 | val_loss: 0.3134 | val_acc: 0.9062 | test_loss: 0.3140 | test_acc: 0.9049
+ 46%|████▌     | 23/50 [1:03:25<1:13:23, 163.08s/it]Epoch: 23 | train_loss: 0.1232 | train_acc: 0.9511 | val_loss: 0.3298 | val_acc: 0.9096 | test_loss: 0.3556 | test_acc: 0.9036
+ 48%|████▊     | 24/50 [1:06:08<1:10:35, 162.91s/it]Epoch: 24 | train_loss: 0.1220 | train_acc: 0.9499 | val_loss: 0.3082 | val_acc: 0.9090 | test_loss: 0.3212 | test_acc: 0.9049
+ 50%|█████     | 25/50 [1:08:47<1:07:24, 161.77s/it]Epoch: 25 | train_loss: 0.1195 | train_acc: 0.9519 | val_loss: 0.3514 | val_acc: 0.9008 | test_loss: 0.3702 | test_acc: 0.9032
+ 52%|█████▏    | 26/50 [1:11:30<1:04:53, 162.23s/it]Epoch: 26 | train_loss: 0.1171 | train_acc: 0.9533 | val_loss: 0.3829 | val_acc: 0.9044 | test_loss: 0.4256 | test_acc: 0.9019
+ 54%|█████▍    | 27/50 [1:14:19<1:02:55, 164.16s/it]Epoch: 27 | train_loss: 0.1147 | train_acc: 0.9537 | val_loss: 0.3545 | val_acc: 0.8994 | test_loss: 0.3754 | test_acc: 0.8974
+ 56%|█████▌    | 28/50 [1:17:02<1:00:08, 164.04s/it]Epoch: 28 | train_loss: 0.1141 | train_acc: 0.9552 | val_loss: 0.3505 | val_acc: 0.9017 | test_loss: 0.3425 | test_acc: 0.9023
+ 58%|█████▊    | 29/50 [1:19:44<57:06, 163.19s/it]  Epoch: 29 | train_loss: 0.1106 | train_acc: 0.9552 | val_loss: 0.3654 | val_acc: 0.9051 | test_loss: 0.3766 | test_acc: 0.9019
+ 60%|██████    | 30/50 [1:22:29<54:39, 163.96s/it]Epoch: 30 | train_loss: 0.1105 | train_acc: 0.9557 | val_loss: 0.3594 | val_acc: 0.9053 | test_loss: 0.3826 | test_acc: 0.8951
+ 62%|██████▏   | 31/50 [1:25:10<51:38, 163.09s/it]Epoch: 31 | train_loss: 0.1086 | train_acc: 0.9566 | val_loss: 0.3044 | val_acc: 0.9059 | test_loss: 0.3089 | test_acc: 0.9085
+ 64%|██████▍   | 32/50 [1:27:55<49:03, 163.51s/it]Epoch: 32 | train_loss: 0.1037 | train_acc: 0.9576 | val_loss: 0.4064 | val_acc: 0.9068 | test_loss: 0.4348 | test_acc: 0.9043
+ 66%|██████▌   | 33/50 [1:30:35<46:01, 162.46s/it]Epoch: 33 | train_loss: 0.1046 | train_acc: 0.9578 | val_loss: 0.4027 | val_acc: 0.9081 | test_loss: 0.4558 | test_acc: 0.9028
+ 68%|██████▊   | 34/50 [1:33:17<43:19, 162.44s/it]Epoch: 34 | train_loss: 0.1011 | train_acc: 0.9591 | val_loss: 0.4008 | val_acc: 0.9011 | test_loss: 0.4332 | test_acc: 0.8972
+ 70%|███████   | 35/50 [1:36:02<40:48, 163.23s/it]Epoch: 35 | train_loss: 0.1014 | train_acc: 0.9590 | val_loss: 0.4939 | val_acc: 0.9066 | test_loss: 0.5273 | test_acc: 0.8968
+ 72%|███████▏  | 36/50 [1:38:48<38:13, 163.84s/it]Epoch: 36 | train_loss: 0.0989 | train_acc: 0.9600 | val_loss: 0.3696 | val_acc: 0.9092 | test_loss: 0.4224 | test_acc: 0.9021
+ 74%|███████▍  | 37/50 [1:41:27<35:13, 162.54s/it]Epoch: 37 | train_loss: 0.0986 | train_acc: 0.9604 | val_loss: 0.3948 | val_acc: 0.9060 | test_loss: 0.4320 | test_acc: 0.8970
+ 76%|███████▌  | 38/50 [1:44:09<32:28, 162.36s/it]Epoch: 38 | train_loss: 0.0986 | train_acc: 0.9607 | val_loss: 0.3371 | val_acc: 0.9051 | test_loss: 0.3978 | test_acc: 0.8959
+ 78%|███████▊  | 39/50 [1:46:51<29:45, 162.32s/it]Epoch: 39 | train_loss: 0.0973 | train_acc: 0.9616 | val_loss: 0.3569 | val_acc: 0.9064 | test_loss: 0.4631 | test_acc: 0.8885
+ 80%|████████  | 40/50 [1:49:36<27:10, 163.05s/it]Epoch: 40 | train_loss: 0.0931 | train_acc: 0.9628 | val_loss: 0.4131 | val_acc: 0.8985 | test_loss: 0.4436 | test_acc: 0.8851
+ 82%|████████▏ | 41/50 [1:52:17<24:21, 162.36s/it]Epoch: 41 | train_loss: 0.0923 | train_acc: 0.9631 | val_loss: 0.4047 | val_acc: 0.9049 | test_loss: 0.4419 | test_acc: 0.8979
+ 84%|████████▍ | 42/50 [1:55:01<21:43, 162.90s/it]Epoch: 42 | train_loss: 0.0929 | train_acc: 0.9631 | val_loss: 0.3588 | val_acc: 0.9041 | test_loss: 0.3948 | test_acc: 0.9004
+ 86%|████████▌ | 43/50 [1:57:47<19:07, 163.92s/it]Epoch: 43 | train_loss: 0.0935 | train_acc: 0.9629 | val_loss: 0.3781 | val_acc: 0.9000 | test_loss: 0.3738 | test_acc: 0.8946
+ 88%|████████▊ | 44/50 [2:00:38<16:35, 165.99s/it]Epoch: 44 | train_loss: 0.0907 | train_acc: 0.9632 | val_loss: 0.3780 | val_acc: 0.9064 | test_loss: 0.3890 | test_acc: 0.9015
+ 90%|█████████ | 45/50 [2:03:21<13:46, 165.21s/it]Epoch: 45 | train_loss: 0.0876 | train_acc: 0.9646 | val_loss: 0.4236 | val_acc: 0.9049 | test_loss: 0.4605 | test_acc: 0.8974
+ 92%|█████████▏| 46/50 [2:06:06<11:00, 165.06s/it]Epoch: 46 | train_loss: 0.0871 | train_acc: 0.9653 | val_loss: 0.4623 | val_acc: 0.9009 | test_loss: 0.4448 | test_acc: 0.9017
+ 94%|█████████▍| 47/50 [2:08:48<08:12, 164.03s/it]Epoch: 47 | train_loss: 0.0886 | train_acc: 0.9651 | val_loss: 0.4317 | val_acc: 0.8960 | test_loss: 0.4642 | test_acc: 0.8776
+ 96%|█████████▌| 48/50 [2:11:31<05:27, 163.67s/it]Epoch: 48 | train_loss: 0.0859 | train_acc: 0.9656 | val_loss: 0.4676 | val_acc: 0.9019 | test_loss: 0.5414 | test_acc: 0.8791
+ 98%|█████████▊| 49/50 [2:14:15<02:43, 163.84s/it]Epoch: 49 | train_loss: 0.0851 | train_acc: 0.9663 | val_loss: 0.3991 | val_acc: 0.9032 | test_loss: 0.4617 | test_acc: 0.8808
+100%|██████████| 50/50 [2:16:54<00:00, 162.40s/it]100%|██████████| 50/50 [2:16:54<00:00, 164.29s/it]
+Epoch: 50 | train_loss: 0.0830 | train_acc: 0.9668 | val_loss: 0.4701 | val_acc: 0.9024 | test_loss: 0.5537 | test_acc: 0.8827
+[INFO] Saving model to: /var/scratch/ase347/DeepSummit/checkpoints/saint_epoch50.pth
