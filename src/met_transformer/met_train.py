@@ -105,7 +105,7 @@ def test_step(
 
             # Calculate and accumulate loss
             loss = loss_fn(y_pred, y_true)
-            test_loss = loss.item()
+            test_loss += loss.item()
 
             test_pred_labels = y_pred.argmax(dim=1)
             test_acc += ((test_pred_labels == y_true).sum().item()/len(test_pred_labels))
