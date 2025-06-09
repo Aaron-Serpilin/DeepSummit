@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --time=72:00:00
+#SBATCH --time=96:00:00
 #SBATCH -N 1
 #SBATCH --ntasks-per-node=1
 #SBATCH -C RTX2080Ti

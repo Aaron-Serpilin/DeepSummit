@@ -182,17 +182,30 @@ def train(
         results["test_acc"].append(test_acc)
 
         if writer:
-          writer.add_scalars(main_tag="Loss",
-                            tag_scalar_dict={"train_loss": train_loss,
-                                              "test_loss": test_loss},
-                                              global_step=epoch)
-          writer.add_scalars(main_tag="Accuracy",
-                            tag_scalar_dict={"train_acc": train_acc,
-                                              "test_acc": test_acc},
-                                              global_step=epoch)
+          writer.add_scalars(
+                main_tag="Loss",
+                tag_scalar_dict= {
+                    "train": results["train_loss"][-1],
+                    "val":   results["val_loss"][-1],
+                    "test":  results["test_loss"][-1],
+                },
+                global_step=epoch,
+            )
+          
+            writer.add_scalars(
+                main_tag="Accuracy",
+                tag_scalar_dict= {
+                    "train": results["train_acc"][-1],
+                    "val":   results["val_acc"][-1],
+                    "test":  results["test_acc"][-1],
+                },
+                global_step=epoch,
+            )
 
-          writer.close()
         else:
           pass
+
+    if writer:
+        writer.close()
 
     return results
