@@ -205,34 +205,32 @@ def save_model(model: torch.nn.Module, # model to save
     torch.save(obj=model.state_dict(), f=model_save_path)
 
 def create_writer(experiment_name: str,
-                  model_name: str,
                   extra: str=None) -> torch.utils.tensorboard.writer.SummaryWriter():
 
     """
-    Create and return a TensorBoard SummaryWriter that logs to a timestamped directory.
-
-    The logs will be organized under:
-        runs/{timestamp}/{experiment_name}/{model_name}/[extra]
+    Create and return a TensorBoard SummaryWriter that logs under:
+        runs/{experiment_name}/{extra}/{timestamp}/
 
     Args:
-        experiment_name (str): A descriptive name for the experiment
-        model_name (str): The model variant 
-        extra (str, optional): Extra information
+        experiment_name (str): top-level folder under runs, e.g. "saint_runs"
+        extra (str, optional): details of this run, e.g. "50_epochs_lr_1e-3_depth_4"
 
     Returns:
-        SummaryWriter:
-            A TensorBoard writer instance writing into the constructed log directory.
+        SummaryWriter pointing at runs/... path.
     """
 
     from datetime import datetime
     import os
 
+    base = "runs"
     timestamp = datetime.now().strftime("%Y-%m-%d--%H:%M:%S")
 
     if extra:
-        log_dir = os.path.join("runs", timestamp, experiment_name, model_name, extra) # Create the log directory path
+        log_dir = os.path.join(base, experiment_name, extra, timestamp) 
     else:
-        log_dir = os.path.join("runs", timestamp, experiment_name, model_name) # Create the log directory path
+        log_dir = os.path.join(base, experiment_name, timestamp) 
+
+    os.makedirs(log_dir, exist_ok=True)
 
     print(f"[INFO] Created SummaryWriter, saving to: {log_dir}")
     return SummaryWriter(log_dir=log_dir)
