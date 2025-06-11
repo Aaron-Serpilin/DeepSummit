@@ -181,10 +181,11 @@ cat_dims = [len(np.unique(df_train[col])) for col in categorical_columns]
 saint = SAINT(
     categories = tuple(cat_dims), 
     num_continuous = len(continuous_columns),                
-    dim = 32,                           
+    dim = 16, # dims = heads * dim_head (dim_head = 16 by default)                       
     dim_out = 1,                       
     depth = 2,                       
-    heads = 8,  
+    heads = 4, 
+    dim_head = 4, 
     num_special_tokens=1,                      
     attn_dropout = 0.5,             
     ff_dropout = 0.5,                  
@@ -208,10 +209,10 @@ saint_results = train(model=saint,
                 loss_fn=loss_fn,
                 epochs=50,
                 writer=create_writer(experiment_name="saint_runs",
-                                    extra="epochs_50_lr_1e-5_depth_2_dropout_5e-1_heads_8"))
+                                    extra="epochs_50_lr_1e-5_depth_2_dropout_5e-1_heads_4_dimhead_4_dim_16"))
 
 plot_loss_curves(saint_results)
 
 save_model(saint,
           "/var/scratch/ase347/DeepSummit/checkpoints",
-          "saint_epochs_50_lr_1e-5_depth_2_dropout_5e-1_heads_8.pth")
+          "saint_epochs_50_lr_1e-5_depth_2_dropout_5e-1_heads_4_dimhead_4_dim_16.pth")
