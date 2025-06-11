@@ -183,8 +183,8 @@ saint = SAINT(
     num_continuous = len(continuous_columns),                
     dim = 32,                           
     dim_out = 1,                       
-    depth = 3,                       
-    heads = 4,  
+    depth = 1,                       
+    heads = 8,  
     num_special_tokens=1,                      
     attn_dropout = 0.5,             
     ff_dropout = 0.5,                  
@@ -208,10 +208,10 @@ saint_results = train(model=saint,
                 loss_fn=loss_fn,
                 epochs=50,
                 writer=create_writer(experiment_name="saint_runs",
-                                    extra="epochs_50_lr_1e-5_depth_3_dropout_5e-1_heads_4"))
+                                    extra="epochs_50_lr_1e-5_depth_1_dropout_5e-1_heads_8"))
 
 plot_loss_curves(saint_results)
 
 save_model(saint,
           "/var/scratch/ase347/DeepSummit/checkpoints",
-          "saint_epochs_50_lr_1e-5_depth_3_dropout_5e-1_heads_4.pth")
+          "saint_epochs_50_lr_1e-5_depth_1_dropout_5e-1_heads_8.pth")
