@@ -184,7 +184,7 @@ saint = SAINT(
     dim = 32,                           
     dim_out = 1,                       
     depth = 3,                       
-    heads = 8,  
+    heads = 4,  
     num_special_tokens=1,                      
     attn_dropout = 0.5,             
     ff_dropout = 0.5,                  
@@ -198,7 +198,7 @@ saint = SAINT(
 saint.to(device)
 
 loss_fn = nn.CrossEntropyLoss()
-optimizer = torch.optim.AdamW(saint.parameters(),lr=0.00001, betas=(0.9, 0.999), weight_decay=0.1)
+optimizer = torch.optim.AdamW(saint.parameters(),lr=0.00001, betas=(0.9, 0.999), weight_decay=0.01)
 
 saint_results = train(model=saint,
                 train_dataloader=tabular_train_dataloader,
@@ -208,10 +208,10 @@ saint_results = train(model=saint,
                 loss_fn=loss_fn,
                 epochs=50,
                 writer=create_writer(experiment_name="saint_runs",
-                                    extra="epochs_50_lr_1e-5_depth_3_dropout_5e-1_decay_1e-1"))
+                                    extra="epochs_50_lr_1e-5_depth_3_dropout_5e-1_heads_4"))
 
 plot_loss_curves(saint_results)
 
 save_model(saint,
           "/var/scratch/ase347/DeepSummit/checkpoints",
-          "saint_epochs_50_lr_1e-5_depth_3_dropout_5e-1_decay_1e-1.pth")
+          "saint_epochs_50_lr_1e-5_depth_3_dropout_5e-1_heads_4.pth")
