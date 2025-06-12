@@ -41,7 +41,7 @@ def train_step(
         full_seq_pred = model(X) # shape (B, T + 1, D_out)
 
         if torch.isnan(full_seq_pred).any():
-            print(f"[TRAIN] Skipping batch {batch} because output contains NaNs (avoiding matrix collapse)")
+            # print(f"[TRAIN] Skipping batch {batch} because output contains NaNs (avoiding matrix collapse)")
             continue
 
         valid_batches += 1
