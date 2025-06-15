@@ -12,5 +12,5 @@
 module load cuda10.1/toolkit/10.1.243
 
 cd /var/scratch/ase347/DeepSummit
-/var/scratch/ase347/anaconda3/envs/deepsummit/bin/python src/scripts/train_stormer.py
+/var/scratch/ase347/anaconda3/envs/deepsummit/bin/python src/scripts/train_saint.py
 
