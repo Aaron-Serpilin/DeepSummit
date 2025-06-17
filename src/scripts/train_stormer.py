@@ -282,6 +282,8 @@ met_weights_with_offset = {
     for off in offsets
 }
 
+print(f"Point 1")
+
 stormer = Stormer(img_size=[128, 256],
                   variables=variables,
                   met_weights=met_weights_with_offset,
@@ -291,10 +293,16 @@ stormer = Stormer(img_size=[128, 256],
                   num_heads=8,
                   mlp_ratio=4.0)
 
+print("Point 2")
+
 stormer.to(device)
+
+print("Point 3")
 
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.AdamW(stormer.parameters(),lr=0.0001, betas=(0.9, 0.999), weight_decay=1e-2)
+
+print("Point 4")
 
 stormer_results = train(model=stormer,
                 train_dataloader=weather_train_dataloader,
