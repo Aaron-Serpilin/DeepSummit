@@ -296,8 +296,6 @@ stormer.to(device)
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.AdamW(stormer.parameters(),lr=0.0001, betas=(0.9, 0.999), weight_decay=1e-2)
 
-writer = SummaryWriter()
-
 stormer_results = train(model=stormer,
                 train_dataloader=weather_train_dataloader,
                 val_dataloader=weather_val_dataloader,
