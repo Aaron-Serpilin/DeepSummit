@@ -287,14 +287,14 @@ stormer = Stormer(img_size=[128, 256],
                   met_weights=met_weights_with_offset,
                   patch_size=2,
                   hidden_size=612,
-                  depth=12,
-                  num_heads=16,
+                  depth=6,
+                  num_heads=8,
                   mlp_ratio=4.0)
 
 stormer.to(device)
 
 loss_fn = nn.CrossEntropyLoss()
-optimizer = torch.optim.AdamW(stormer.parameters(),lr=0.00001, betas=(0.9, 0.999), weight_decay=1e-2)
+optimizer = torch.optim.AdamW(stormer.parameters(),lr=0.0001, betas=(0.9, 0.999), weight_decay=1e-2)
 
 writer = SummaryWriter()
 
@@ -306,10 +306,10 @@ stormer_results = train(model=stormer,
                 loss_fn=loss_fn,
                 epochs=50,
                 writer=create_writer(experiment_name="stormer_runs",
-                                    extra="epochs_50_lr_1e-5_hidden_size_612_depth_12"))
+                                    extra="epochs_50_lr_1e-4_hidden_size_612_depth_6_heads_8"))
 
 plot_loss_curves(stormer_results)
 
 save_model(stormer,
           "/var/scratch/ase347/DeepSummit/checkpoints",
-          "stormer_epochs_50_lr_1e-5_hidden_size_612_depth_12.pth")
+          "stormer_epochs_50_lr_1e-4_hidden_size_612_depth_6_heads_8.pth")
