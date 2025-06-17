@@ -282,27 +282,22 @@ met_weights_with_offset = {
     for off in offsets
 }
 
-print(f"Point 1")
 
 stormer = Stormer(img_size=[128, 256],
                   variables=variables,
                   met_weights=met_weights_with_offset,
                   patch_size=2,
                   hidden_size=612,
-                  depth=6,
-                  num_heads=8,
+                  depth=12,
+                  num_heads=9,
                   mlp_ratio=4.0)
 
-print("Point 2")
+print("Passed Initialization (hidden_size % num_heads == 0)")
 
 stormer.to(device)
 
-print("Point 3")
-
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.AdamW(stormer.parameters(),lr=0.0001, betas=(0.9, 0.999), weight_decay=1e-2)
-
-print("Point 4")
 
 stormer_results = train(model=stormer,
                 train_dataloader=weather_train_dataloader,
@@ -312,10 +307,10 @@ stormer_results = train(model=stormer,
                 loss_fn=loss_fn,
                 epochs=50,
                 writer=create_writer(experiment_name="stormer_runs",
-                                    extra="epochs_50_lr_1e-4_hidden_size_612_depth_6_heads_8"))
+                                    extra="epochs_50_lr_1e-4_hidden_size_612_depth_12_heads_9"))
 
 plot_loss_curves(stormer_results)
 
 save_model(stormer,
           "/var/scratch/ase347/DeepSummit/checkpoints",
-          "stormer_epochs_50_lr_1e-4_hidden_size_612_depth_6_heads_8.pth")
+          "stormer_epochs_50_lr_1e-4_hidden_size_612_depth_12_heads_9.pth")
