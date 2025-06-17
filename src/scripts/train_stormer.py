@@ -287,7 +287,7 @@ stormer = Stormer(img_size=[128, 256],
                   variables=variables,
                   met_weights=met_weights_with_offset,
                   patch_size=2,
-                  hidden_size=612,
+                  hidden_size=306,
                   depth=12,
                   num_heads=9,
                   mlp_ratio=4.0)
@@ -307,10 +307,10 @@ stormer_results = train(model=stormer,
                 loss_fn=loss_fn,
                 epochs=50,
                 writer=create_writer(experiment_name="stormer_runs",
-                                    extra="epochs_50_lr_1e-4_hidden_size_612_depth_12_heads_9"))
+                                    extra="epochs_50_lr_1e-4_hidden_size_306_depth_12_heads_9"))
 
 plot_loss_curves(stormer_results)
 
 save_model(stormer,
           "/var/scratch/ase347/DeepSummit/checkpoints",
-          "stormer_epochs_50_lr_1e-4_hidden_size_612_depth_12_heads_9.pth")
+          "stormer_epochs_50_lr_1e-4_hidden_size_306_depth_12_heads_9.pth")
