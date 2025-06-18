@@ -297,7 +297,7 @@ print("Passed Initialization (hidden_size % num_heads == 0)")
 stormer.to(device)
 
 loss_fn = nn.CrossEntropyLoss()
-optimizer = torch.optim.AdamW(stormer.parameters(),lr=0.000001, betas=(0.9, 0.999), weight_decay=1e-2)
+optimizer = torch.optim.AdamW(stormer.parameters(),lr=0.00001, betas=(0.9, 0.999), weight_decay=1e-1)
 
 stormer_results = train(model=stormer,
                 train_dataloader=weather_train_dataloader,
@@ -307,10 +307,10 @@ stormer_results = train(model=stormer,
                 loss_fn=loss_fn,
                 epochs=50,
                 writer=create_writer(experiment_name="stormer_runs",
-                                    extra="epochs_50_lr_1e-6_hidden_size_612_depth_12_heads_12"))
+                                    extra="epochs_50_lr_1e-5_hidden_size_612_depth_12_heads_12_decay_1e-1"))
 
 plot_loss_curves(stormer_results)
 
 save_model(stormer,
           "/var/scratch/ase347/DeepSummit/checkpoints",
-          "stormer_epochs_50_lr_1e-6_hidden_size_612_depth_12_heads_12.pth")
+          "stormer_epochs_50_lr_1e-5_hidden_size_612_depth_12_heads_12_decay_1e-1.pth")
