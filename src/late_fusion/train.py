@@ -30,24 +30,12 @@ def train_step(
     for batch, (X, y) in enumerate(dataloader):
 
         X, y = X.to(device), y.to(device)
-
-        # Forward pass
         y_pred = model(X)
-
-        # Calculate and accumulate loss
         loss = loss_fn(y_pred, y)
         train_loss += loss.item()
-
-        # Optimizer zero grad
         optimizer.zero_grad()
-
-        # Loss backward
         loss.backward()
-
-        # Optimizer step
         optimizer.step()
-
-        # Accuracy metric across all batches
         y_pred_class = torch.argmax(torch.softmax(y_pred, dim=1), dim=1)
         train_acc += (y_pred_class == y).sum().item()/len(y_pred)
 
@@ -79,15 +67,11 @@ def test_step(
     with torch.inference_mode():
 
         for batch, (X, y) in enumerate(dataloader):
+
             X, y = X.to(device), y.to(device)
-
-            # Forward pass
             test_pred_logits = model(X)
-
-            # Calculate and accumulate loss
             loss = loss_fn(test_pred_logits, y)
             test_loss += loss.item()
-
             test_pred_labels = test_pred_logits.argmax(dim=1)
             test_acc += ((test_pred_labels == y).sum().item()/len(test_pred_labels))
             

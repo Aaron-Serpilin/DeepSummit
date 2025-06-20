@@ -1,4 +1,5 @@
 import torch
+from torch import nn
 from torch.utils.data import DataLoader
 
 from src.tab_transformer.tab_augmentations import embed_data_mask
@@ -58,10 +59,10 @@ def extract_logits_met(model: nn.Module,
             X, mask, y_true, window_mask = data
             X, mask, y_true, window_mask = X.to(device), mask.to(device), y_true.to(device), window_mask.to(device)
 
-            if torch.isnan(full_seq_pred).any():
-                continue
+            full_seq_pred = model(X)
 
-            full_seq_pred = model(X)           
+            if torch.isnan(full_seq_pred).any():
+                continue           
            
             logits = full_seq_pred[:, 0, :]     
 

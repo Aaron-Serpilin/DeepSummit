@@ -1,6 +1,6 @@
-from pathlib import Path
 import pandas as pd
-from torch.utils.data import Dataset, DataLoader
+import torch
+from torch.utils.data import Dataset
 
 class FusionDataset(Dataset):
      
@@ -16,8 +16,7 @@ class FusionDataset(Dataset):
     def __len__(self):
         return len(self.y)
     
-    def __getitem__ (self,
-                    idx):
+    def __getitem__ (self, idx):
         fused = torch.cat([self.tab_logits[idx], self.met_logits[idx]], dim=1)
         return fused, self.y[idx]
 
