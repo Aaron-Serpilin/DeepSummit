@@ -292,8 +292,6 @@ stormer = Stormer(img_size=[128, 256],
                   num_heads=12,
                   mlp_ratio=4.0)
 
-print("Passed Initialization (hidden_size % num_heads == 0)")
-
 stormer.to(device)
 
 loss_fn = nn.CrossEntropyLoss()
@@ -308,8 +306,6 @@ stormer_results = train(model=stormer,
                 epochs=50,
                 writer=create_writer(experiment_name="stormer_runs",
                                     extra="epochs_50_lr_1e-5_hidden_size_612_depth_12_heads_12_decay_1e-2_betas_95e-2_999e-3"))
-
-plot_loss_curves(stormer_results)
 
 save_model(stormer,
           "/var/scratch/ase347/DeepSummit/checkpoints",

@@ -211,8 +211,6 @@ saint_results = train(model=saint,
                 writer=create_writer(experiment_name="saint_runs",
                                     extra="saint_model"))
 
-plot_loss_curves(saint_results)
-
 save_model(saint,
           "/var/scratch/ase347/DeepSummit/checkpoints",
           "saint_model.pth")

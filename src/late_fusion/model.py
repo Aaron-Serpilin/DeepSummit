@@ -12,24 +12,15 @@ class DeepSummit (nn.Module):
                  weather_model_path: str,
                  num_classes: int,
                  freeze_layers: bool = True,
-                 saint_kwargs: Dict[str, Any] = None,
-                 stormer_kwargs: Dict[str, Any] = None,
                  device: torch.device = None
                  ):
         
             super.__init__()
             device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
-            saint_kwargs = saint_kwargs or {}
-            stormer_kwargs = stormer_kwargs or {}
-
-            self.saint = SAINT(**saint_kwargs).to(device)
-            self.stormer = Stormer(**saint_kwargs).to(device)
-
             # Loading the model's saved weights from their trained .pth files
-            self.saint.load_state_dict(torch.load(tabular_model_path, map_location=device))
-            self.stormer.load_state_dict(torch.load(weather_model_path, map_location=device))
-
+            self.saint   = torch.load(tabular_model_path, map_location=device).to(device)
+            self.stormer = torch.load(weather_model_path,  map_location=device).to(device)
 
             if freeze_layers:
                   for parameter in self.saint.parameters(): parameter.requires_grad = False
