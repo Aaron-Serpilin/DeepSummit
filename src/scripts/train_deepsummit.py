@@ -129,14 +129,15 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 
+print(f"Passed Torch imports")
 from src.tab_transformer.tab_model import SAINT
 from src.met_transformer.met_model import Stormer
 from src.late_fusion.model import DeepSummit
-
+print(f"Passed Model imports")
 from src.late_fusion.utils import FusionDataset
 from src.tab_transformer.tab_utils import TabularDataset
 from src.met_transformer.met_utils import WeatherDataset
-
+print(f"Passed Dataset imports")
 from src.late_fusion.extract_logits import extract_logits_tab, extract_logits_met
 from src.helper_functions import set_seeds, save_model, create_writer
 from src.late_fusion.train import train_step, test_step, train
