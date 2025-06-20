@@ -297,7 +297,7 @@ print("Passed Initialization (hidden_size % num_heads == 0)")
 stormer.to(device)
 
 loss_fn = nn.CrossEntropyLoss()
-optimizer = torch.optim.AdamW(stormer.parameters(),lr=0.00001, betas=(0.95, 0.999), weight_decay=1e-2)
+optimizer = torch.optim.AdamW(stormer.parameters(),lr=0.00001, betas=(0.9, 0.98), weight_decay=1e-2)
 
 stormer_results = train(model=stormer,
                 train_dataloader=weather_train_dataloader,
