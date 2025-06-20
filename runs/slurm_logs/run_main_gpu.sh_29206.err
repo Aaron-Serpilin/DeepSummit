@@ -1,0 +1,27 @@
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.0.1 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "/var/scratch/ase347/DeepSummit/src/scripts/train_saint.py", line 9, in <module>
+    import torchvision
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/__init__.py", line 6, in <module>
+    from torchvision import datasets, io, models, ops, transforms, utils
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/__init__.py", line 17, in <module>
+    from . import detection, optical_flow, quantization, segmentation, video
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/detection/__init__.py", line 1, in <module>
+    from .faster_rcnn import *
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/detection/faster_rcnn.py", line 16, in <module>
+    from .anchor_utils import AnchorGenerator
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/detection/anchor_utils.py", line 10, in <module>
+    class AnchorGenerator(nn.Module):
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/detection/anchor_utils.py", line 63, in AnchorGenerator
+    device: torch.device = torch.device("cpu"),
+/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/detection/anchor_utils.py:63: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /opt/conda/conda-bld/pytorch_1682343904639/work/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device("cpu"),
+  0%|          | 0/50 [00:00<?, ?it/s]  2%|▏         | 1/50 [01:36<1:18:27, 96.07s/it]  4%|▍         | 2/50 [03:06<1:14:14, 92.80s/it]  6%|▌         | 3/50 [04:42<1:13:45, 94.17s/it]  8%|▊         | 4/50 [06:11<1:10:44, 92.27s/it] 10%|█         | 5/50 [07:46<1:09:55, 93.23s/it] 12%|█▏        | 6/50 [09:19<1:08:23, 93.26s/it] 14%|█▍        | 7/50 [10:49<1:06:00, 92.12s/it] 16%|█▌        | 8/50 [12:19<1:03:55, 91.32s/it] 18%|█▊        | 9/50 [13:50<1:02:16, 91.14s/it] 20%|██        | 10/50 [15:23<1:01:13, 91.83s/it] 22%|██▏       | 11/50 [16:52<59:13, 91.11s/it]   24%|██▍       | 12/50 [18:24<57:43, 91.15s/it] 26%|██▌       | 13/50 [19:53<55:50, 90.54s/it] 28%|██▊       | 14/50 [21:24<54:21, 90.60s/it] 30%|███       | 15/50 [22:58<53:26, 91.62s/it] 32%|███▏      | 16/50 [24:26<51:20, 90.61s/it] 34%|███▍      | 17/50 [25:58<50:00, 90.94s/it] 36%|███▌      | 18/50 [27:27<48:13, 90.41s/it] 38%|███▊      | 19/50 [28:58<46:53, 90.76s/it] 40%|████      | 20/50 [30:23<44:30, 89.02s/it] 42%|████▏     | 21/50 [31:53<43:07, 89.21s/it] 44%|████▍     | 22/50 [33:19<41:13, 88.32s/it] 46%|████▌     | 23/50 [34:46<39:28, 87.74s/it] 48%|████▊     | 24/50 [36:15<38:15, 88.28s/it] 50%|█████     | 25/50 [37:44<36:49, 88.39s/it] 52%|█████▏    | 26/50 [39:18<36:00, 90.03s/it] 54%|█████▍    | 27/50 [40:48<34:31, 90.08s/it] 56%|█████▌    | 28/50 [42:23<33:35, 91.61s/it] 58%|█████▊    | 29/50 [43:57<32:17, 92.24s/it] 60%|██████    | 30/50 [45:30<30:48, 92.44s/it] 62%|██████▏   | 31/50 [46:59<28:58, 91.50s/it] 64%|██████▍   | 32/50 [48:29<27:19, 91.06s/it] 66%|██████▌   | 33/50 [50:03<26:04, 92.04s/it] 68%|██████▊   | 34/50 [51:39<24:52, 93.28s/it] 70%|███████   | 35/50 [53:20<23:50, 95.34s/it] 72%|███████▏  | 36/50 [54:55<22:14, 95.35s/it] 74%|███████▍  | 37/50 [56:25<20:18, 93.71s/it] 76%|███████▌  | 38/50 [57:53<18:24, 92.08s/it] 78%|███████▊  | 39/50 [59:24<16:50, 91.84s/it] 80%|████████  | 40/50 [1:00:54<15:11, 91.18s/it] 82%|████████▏ | 41/50 [1:02:23<13:34, 90.53s/it] 84%|████████▍ | 42/50 [1:04:09<12:41, 95.24s/it] 86%|████████▌ | 43/50 [1:05:50<11:17, 96.83s/it] 88%|████████▊ | 44/50 [1:07:26<09:40, 96.70s/it] 90%|█████████ | 45/50 [1:09:02<08:01, 96.38s/it] 92%|█████████▏| 46/50 [1:10:33<06:19, 94.80s/it] 94%|█████████▍| 47/50 [1:12:08<04:44, 94.98s/it] 96%|█████████▌| 48/50 [1:13:37<03:06, 93.23s/it] 98%|█████████▊| 49/50 [1:15:10<01:32, 92.91s/it]100%|██████████| 50/50 [1:16:37<00:00, 91.24s/it]100%|██████████| 50/50 [1:16:37<00:00, 91.95s/it]

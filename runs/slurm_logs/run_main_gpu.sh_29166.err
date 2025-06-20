@@ -1,0 +1,27 @@
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.0.1 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "/var/scratch/ase347/DeepSummit/src/scripts/train_saint.py", line 9, in <module>
+    import torchvision
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/__init__.py", line 6, in <module>
+    from torchvision import datasets, io, models, ops, transforms, utils
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/__init__.py", line 17, in <module>
+    from . import detection, optical_flow, quantization, segmentation, video
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/detection/__init__.py", line 1, in <module>
+    from .faster_rcnn import *
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/detection/faster_rcnn.py", line 16, in <module>
+    from .anchor_utils import AnchorGenerator
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/detection/anchor_utils.py", line 10, in <module>
+    class AnchorGenerator(nn.Module):
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/detection/anchor_utils.py", line 63, in AnchorGenerator
+    device: torch.device = torch.device("cpu"),
+/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/detection/anchor_utils.py:63: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /opt/conda/conda-bld/pytorch_1682343904639/work/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device("cpu"),
+  0%|          | 0/50 [00:00<?, ?it/s]  2%|▏         | 1/50 [02:03<1:40:50, 123.49s/it]  4%|▍         | 2/50 [03:59<1:35:20, 119.18s/it]  6%|▌         | 3/50 [06:00<1:33:48, 119.75s/it]  8%|▊         | 4/50 [08:03<1:32:48, 121.05s/it] 10%|█         | 5/50 [09:57<1:28:55, 118.56s/it] 12%|█▏        | 6/50 [11:53<1:26:16, 117.66s/it] 14%|█▍        | 7/50 [13:46<1:23:12, 116.11s/it] 16%|█▌        | 8/50 [15:45<1:22:06, 117.30s/it] 18%|█▊        | 9/50 [17:57<1:23:16, 121.87s/it] 20%|██        | 10/50 [20:03<1:22:02, 123.06s/it] 22%|██▏       | 11/50 [21:56<1:18:00, 120.02s/it] 24%|██▍       | 12/50 [23:56<1:16:02, 120.06s/it] 26%|██▌       | 13/50 [26:01<1:14:49, 121.32s/it] 28%|██▊       | 14/50 [28:05<1:13:20, 122.25s/it] 30%|███       | 15/50 [30:00<1:10:07, 120.20s/it] 32%|███▏      | 16/50 [32:08<1:09:19, 122.35s/it] 34%|███▍      | 17/50 [34:01<1:05:50, 119.72s/it] 36%|███▌      | 18/50 [36:05<1:04:29, 120.91s/it] 38%|███▊      | 19/50 [37:58<1:01:11, 118.44s/it]

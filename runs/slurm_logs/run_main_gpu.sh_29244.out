@@ -1,0 +1,12 @@
+torch version: 2.0.1
+torchvision version: 0.15.2
+mlxtend version: 0.23.4
+numpy version: 2.0.1
+Device is: cpu
+
+[INFO] Data splits already exist under data/himalayas_data. Skipping split.
+Tabular train dataloader: <torch.utils.data.dataloader.DataLoader object at 0x7f3778673a30>
+Tabular val dataloader: <torch.utils.data.dataloader.DataLoader object at 0x7f3777c15000>
+Tabular test dataloader: <torch.utils.data.dataloader.DataLoader object at 0x7f3777c150c0>
+
+[INFO] Created SummaryWriter, saving to: runs/saint_runs/epochs_50_lr_1e-6_depth_2_dropout_5e-1/2025-06-11--15:59:21

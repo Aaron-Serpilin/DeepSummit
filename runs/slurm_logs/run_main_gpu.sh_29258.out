@@ -1,0 +1,20 @@
+torch version: 2.0.1
+torchvision version: 0.15.2
+mlxtend version: 0.23.4
+numpy version: 2.0.1
+Device is: cpu
+
+[INFO] Data splits already exist under data/himalayas_data. Skipping split.
+Tabular train dataloader: <torch.utils.data.dataloader.DataLoader object at 0x7f9e047d7a60>
+Tabular val dataloader: <torch.utils.data.dataloader.DataLoader object at 0x7f9e03d79030>
+Tabular test dataloader: <torch.utils.data.dataloader.DataLoader object at 0x7f9e03d790f0>
+
+[INFO] Created SummaryWriter, saving to: runs/saint_runs/epochs_50_lr_1e-5_depth_2_dropout_5e-1_heads_8/2025-06-11--21:21:26
+Epoch: 1 | train_loss: 0.2664 | train_acc: 0.8920 | val_loss: 0.2353 | val_acc: 0.9013 | test_loss: 0.2224 | test_acc: 0.9094
+Epoch: 2 | train_loss: 0.1995 | train_acc: 0.9204 | val_loss: 0.2202 | val_acc: 0.9106 | test_loss: 0.2192 | test_acc: 0.9106
+Epoch: 3 | train_loss: 0.1931 | train_acc: 0.9220 | val_loss: 0.2262 | val_acc: 0.9034 | test_loss: 0.2067 | test_acc: 0.9173
+Epoch: 4 | train_loss: 0.1888 | train_acc: 0.9243 | val_loss: 0.2305 | val_acc: 0.9010 | test_loss: 0.2043 | test_acc: 0.9194
+Epoch: 5 | train_loss: 0.1863 | train_acc: 0.9247 | val_loss: 0.2156 | val_acc: 0.9128 | test_loss: 0.2122 | test_acc: 0.9141
+Epoch: 6 | train_loss: 0.1840 | train_acc: 0.9262 | val_loss: 0.2153 | val_acc: 0.9127 | test_loss: 0.2056 | test_acc: 0.9173
+Epoch: 7 | train_loss: 0.1812 | train_acc: 0.9277 | val_loss: 0.2123 | val_acc: 0.9123 | test_loss: 0.2068 | test_acc: 0.9160
+Epoch: 8 | train_loss: 0.1805 | train_acc: 0.9277 | val_loss: 0.2202 | val_acc: 0.9076 | test_loss: 0.2042 | test_acc: 0.9202

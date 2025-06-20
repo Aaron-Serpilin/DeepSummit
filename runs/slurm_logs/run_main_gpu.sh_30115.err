@@ -1,0 +1,38 @@
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.0.1 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "/var/scratch/ase347/DeepSummit/src/scripts/train_stormer.py", line 9, in <module>
+    import torchvision
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/__init__.py", line 6, in <module>
+    from torchvision import datasets, io, models, ops, transforms, utils
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/__init__.py", line 17, in <module>
+    from . import detection, optical_flow, quantization, segmentation, video
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/detection/__init__.py", line 1, in <module>
+    from .faster_rcnn import *
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/detection/faster_rcnn.py", line 16, in <module>
+    from .anchor_utils import AnchorGenerator
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/detection/anchor_utils.py", line 10, in <module>
+    class AnchorGenerator(nn.Module):
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/detection/anchor_utils.py", line 63, in AnchorGenerator
+    device: torch.device = torch.device("cpu"),
+/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/detection/anchor_utils.py:63: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /opt/conda/conda-bld/pytorch_1682343904639/work/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device("cpu"),
+Traceback (most recent call last):
+  File "/var/scratch/ase347/DeepSummit/src/scripts/train_stormer.py", line 287, in <module>
+    stormer = Stormer(img_size=[128, 256],
+  File "/var/scratch/ase347/DeepSummit/src/met_transformer/met_model.py", line 41, in __init__
+    self.blocks = nn.ModuleList([
+  File "/var/scratch/ase347/DeepSummit/src/met_transformer/met_model.py", line 42, in <listcomp>
+    Block(hidden_size, num_heads, mlp_ratio) for _ in range(depth)
+  File "/var/scratch/ase347/DeepSummit/src/met_transformer/met_blocks.py", line 120, in __init__
+    self.attn = Attention(dim=hidden_size, heads=num_heads, attn_drop=0.1, proj_drop=0.1)
+  File "/var/scratch/ase347/DeepSummit/src/met_transformer/met_attention.py", line 25, in __init__
+    assert dim % heads == 0, "hidden_size must be divisible by num_heads"
+AssertionError: hidden_size must be divisible by num_heads

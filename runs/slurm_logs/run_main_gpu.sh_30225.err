@@ -1,0 +1,27 @@
+
+A module that was compiled using NumPy 1.x cannot be run in
+NumPy 2.0.1 as it may crash. To support both 1.x and 2.x
+versions of NumPy, modules must be compiled with NumPy 2.0.
+Some module may need to rebuild instead e.g. with 'pybind11>=2.12'.
+
+If you are a user of the module, the easiest solution will be to
+downgrade to 'numpy<2' or try to upgrade the affected module.
+We expect that some modules will need time to support NumPy 2.
+
+Traceback (most recent call last):  File "/var/scratch/ase347/DeepSummit/src/scripts/train_stormer.py", line 9, in <module>
+    import torchvision
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/__init__.py", line 6, in <module>
+    from torchvision import datasets, io, models, ops, transforms, utils
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/__init__.py", line 17, in <module>
+    from . import detection, optical_flow, quantization, segmentation, video
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/detection/__init__.py", line 1, in <module>
+    from .faster_rcnn import *
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/detection/faster_rcnn.py", line 16, in <module>
+    from .anchor_utils import AnchorGenerator
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/detection/anchor_utils.py", line 10, in <module>
+    class AnchorGenerator(nn.Module):
+  File "/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/detection/anchor_utils.py", line 63, in AnchorGenerator
+    device: torch.device = torch.device("cpu"),
+/var/scratch/ase347/anaconda3/envs/deepsummit/lib/python3.10/site-packages/torchvision/models/detection/anchor_utils.py:63: UserWarning: Failed to initialize NumPy: _ARRAY_API not found (Triggered internally at /opt/conda/conda-bld/pytorch_1682343904639/work/torch/csrc/utils/tensor_numpy.cpp:84.)
+  device: torch.device = torch.device("cpu"),
+  0%|          | 0/50 [00:00<?, ?it/s]  2%|▏         | 1/50 [05:24<4:24:36, 324.00s/it]  4%|▍         | 2/50 [10:57<4:23:32, 329.43s/it]  6%|▌         | 3/50 [16:06<4:10:48, 320.18s/it]  8%|▊         | 4/50 [21:02<3:58:12, 310.71s/it] 10%|█         | 5/50 [25:57<3:48:49, 305.09s/it] 12%|█▏        | 6/50 [31:06<3:44:37, 306.31s/it] 14%|█▍        | 7/50 [36:20<3:41:17, 308.77s/it] 16%|█▌        | 8/50 [41:48<3:40:30, 315.00s/it] 18%|█▊        | 9/50 [47:13<3:37:26, 318.21s/it] 20%|██        | 10/50 [52:22<3:30:13, 315.34s/it] 22%|██▏       | 11/50 [57:07<3:18:58, 306.12s/it] 24%|██▍       | 12/50 [1:01:50<3:09:14, 298.81s/it] 26%|██▌       | 13/50 [1:06:35<3:01:44, 294.72s/it] 28%|██▊       | 14/50 [1:11:26<2:56:07, 293.54s/it] 30%|███       | 15/50 [1:16:22<2:51:41, 294.34s/it] 32%|███▏      | 16/50 [1:21:34<2:49:48, 299.65s/it] 34%|███▍      | 17/50 [1:26:34<2:44:53, 299.81s/it] 36%|███▌      | 18/50 [1:31:49<2:42:21, 304.44s/it] 38%|███▊      | 19/50 [1:37:12<2:40:08, 309.95s/it] 40%|████      | 20/50 [1:42:45<2:38:27, 316.91s/it] 42%|████▏     | 21/50 [1:48:33<2:37:43, 326.31s/it] 44%|████▍     | 22/50 [1:54:32<2:36:47, 335.97s/it] 46%|████▌     | 23/50 [2:01:00<2:38:10, 351.52s/it] 48%|████▊     | 24/50 [2:07:09<2:34:37, 356.83s/it] 50%|█████     | 25/50 [2:13:13<2:29:33, 358.96s/it] 52%|█████▏    | 26/50 [2:19:13<2:23:46, 359.42s/it] 54%|█████▍    | 27/50 [2:25:10<2:17:29, 358.67s/it] 56%|█████▌    | 28/50 [2:31:22<2:12:55, 362.51s/it] 58%|█████▊    | 29/50 [2:37:26<2:07:04, 363.08s/it] 60%|██████    | 30/50 [2:43:22<2:00:18, 360.90s/it] 62%|██████▏   | 31/50 [2:49:01<1:52:15, 354.49s/it] 64%|██████▍   | 32/50 [2:55:12<1:47:45, 359.21s/it] 66%|██████▌   | 33/50 [3:01:25<1:43:00, 363.54s/it] 68%|██████▊   | 34/50 [3:07:46<1:38:19, 368.70s/it] 70%|███████   | 35/50 [3:14:19<1:33:58, 375.92s/it] 72%|███████▏  | 36/50 [3:20:44<1:28:22, 378.75s/it] 74%|███████▍  | 37/50 [3:27:14<1:22:45, 381.96s/it] 76%|███████▌  | 38/50 [3:34:12<1:18:35, 392.94s/it] 78%|███████▊  | 39/50 [3:41:05<1:13:09, 399.02s/it] 80%|████████  | 40/50 [3:47:31<1:05:51, 395.12s/it] 82%|████████▏ | 41/50 [3:53:42<58:10, 387.79s/it]   84%|████████▍ | 42/50 [3:59:35<50:19, 377.44s/it] 86%|████████▌ | 43/50 [4:05:28<43:10, 370.02s/it] 88%|████████▊ | 44/50 [4:11:09<36:07, 361.28s/it] 90%|█████████ | 45/50 [4:16:46<29:29, 353.99s/it] 92%|█████████▏| 46/50 [4:22:10<23:00, 345.08s/it] 94%|█████████▍| 47/50 [4:27:28<16:50, 336.99s/it] 96%|█████████▌| 48/50 [4:32:35<10:55, 327.97s/it] 98%|█████████▊| 49/50 [4:38:10<05:29, 329.88s/it]100%|██████████| 50/50 [4:43:27<00:00, 326.26s/it]100%|██████████| 50/50 [4:43:27<00:00, 340.16s/it]
