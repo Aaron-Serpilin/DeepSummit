@@ -65,7 +65,6 @@ def train_step(
     train_acc /= valid_batches
     return train_loss, train_acc
 
-
 def test_step(
     model: torch.nn.Module, 
     dataloader: torch.utils.data.DataLoader, 
