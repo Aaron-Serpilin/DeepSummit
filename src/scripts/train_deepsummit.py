@@ -123,6 +123,8 @@ script_dir    = os.path.dirname(__file__)
 project_root  = os.path.abspath(os.path.join(script_dir, os.pardir, os.pardir))
 sys.path.insert(0, project_root)
 
+print(f"Passed Try-Except Blocks")
+
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
@@ -139,6 +141,8 @@ from src.late_fusion.extract_logits import extract_logits_tab, extract_logits_me
 from src.helper_functions import set_seeds, save_model, create_writer
 from src.late_fusion.train import train_step, test_step, train
 
+print(f"Passed Imports")
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Device is: {device}\n")
 
@@ -153,6 +157,7 @@ saint = torch.load(saint_path, map_location=device).to(device)
 
 for parameter in saint.parameters(): parameter.requires_grad = False
 
+print(f"Passed SAINT setup")
 
 #### Stormer Setup ####
 
@@ -162,6 +167,8 @@ stormer_path = Path("src/models/stormer_model.pth")
 stormer = torch.load(stormer_path, map_location=device).to(device)
 
 for parameter in stormer.parameters(): parameter.requires_grad = False
+
+print(f"Passed Stormer setup")
 
 #### DeepSummit Setup ####
 
@@ -173,6 +180,8 @@ weather_logits_val,  _  = extract_logits_met(stormer, weather_val_dataloader, de
 
 tabular_logits_test, y_test_tabular = extract_logits_tab(saint, tabular_test_dataloader, device)
 weather_logits_test,  _ = extract_logits_met(stormer, weather_test_dataloader, device)
+
+print(f"Passed Extraction")
 
 # Different structure than the other datasets and DataLoaders, hence, we don't reuse create_dataloaders
 
@@ -193,6 +202,8 @@ deepsummit = DeepSummit(
     freeze_layers=True,
     device=device
 ).to(device)
+
+print(f"Passed DeepSummit initialization")
 
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.AdamW(deepsummit.parameters(), lr=1e-3)
