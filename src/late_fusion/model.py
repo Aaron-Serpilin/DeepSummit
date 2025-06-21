@@ -26,7 +26,13 @@ class DeepSummit (nn.Module):
                   for parameter in self.saint.parameters(): parameter.requires_grad = False
                   for parameter in self.stormer.parameters(): parameter.requires_grad = False
 
-            self.fusion = nn.Linear(2 * num_classes, num_classes).to(device)
+            self.fusion = nn.Sequential(
+                  nn.Linear(2 * num_classes, 2* num_classes),
+                  nn.ReLU(),
+                  nn.Dropout(0.2),
+                  nn.Linear(2 * num_classes, num_classes)
+            ).to(device)
+           
 
     def forward(self,
                 X_tab,
