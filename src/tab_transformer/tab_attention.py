@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import numpy as np
 from einops import rearrange
 
-from src.tab_transformer.tab_blocks import GEGLU, Residual, PreNorm
+from src.tab_transformer.tab_blocks import GEGLU, Residual, PreNorm, simple_MLP, MLP
 
 class FeedForward (nn.Module):
 
@@ -218,7 +218,8 @@ class RowColTransformer(nn.Module):
                  dim_head, 
                  attn_dropout, 
                  ff_dropout,
-                 style='col'):
+                 style='col'
+                 ):
         
         super().__init__()
         self.embeds = nn.Embedding(num_tokens, dim)

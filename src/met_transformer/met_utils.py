@@ -65,7 +65,6 @@ class WeatherDataset (Dataset):
 
         # Metadata
         self.base_features = sorted(features) # flattened column names without time offsets
-        self.test = list(variables)
         self.offsets = sorted(offsets)
         self.num_days = len(self.offsets)
         self.num_feats_per_day = len(self.base_features)
@@ -90,7 +89,6 @@ class WeatherDataset (Dataset):
 
         self.window_masks = np.stack([
             np.concatenate([
-                # self.cls,
                 np.ones(intra_context, dtype=np.int64),
                 np.zeros(self.num_days - intra_context, dtype=np.int64)
             ])

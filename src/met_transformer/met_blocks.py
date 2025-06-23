@@ -4,8 +4,6 @@ from src.met_transformer.met_attention import Attention
 from typing import List, Dict
 import re
 
-from src.met_transformer.met_train import train_step, test_step
-
 ### Helpers ###
 
 def modulate (x, shift, scale):
