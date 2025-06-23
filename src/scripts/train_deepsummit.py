@@ -202,11 +202,11 @@ deepsummit_results = train(model=deepsummit,
                 test_dataloader=test_dataloader,
                 optimizer=optimizer,
                 loss_fn=loss_fn,
-                epochs=30,
+                epochs=20,
                 writer=create_writer(experiment_name="deepsummit_runs",
-                                    extra="deepsummit_model_epochs_30_fusion_layers_4"))
+                                    extra="deepsummit_model_epochs_20_fusion_layers_4"))
 
 save_model(saint,
           "/var/scratch/ase347/DeepSummit/checkpoints",
-          "deepsummit_model_epochs_30_fusion_layers_4.pth")
+          "deepsummit_model_epochs_20_fusion_layers_4.pth")
 
