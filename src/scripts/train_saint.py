@@ -207,10 +207,10 @@ saint_results = train(model=saint,
                 test_dataloader=tabular_test_dataloader,
                 optimizer=optimizer,
                 loss_fn=loss_fn,
-                epochs=50,
+                epochs=10,
                 writer=create_writer(experiment_name="saint_runs",
-                                    extra="saint_model"))
+                                    extra="saint_model_10_epochs"))
 
 save_model(saint,
           "/var/scratch/ase347/DeepSummit/checkpoints",
-          "saint_model.pth")
+          "saint_model_10_epochs.pth")
