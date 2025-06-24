@@ -303,10 +303,10 @@ stormer_results = train(model=stormer,
                 test_dataloader=weather_test_dataloader,
                 optimizer=optimizer,
                 loss_fn=loss_fn,
-                epochs=50,
+                epochs=200,
                 writer=create_writer(experiment_name="stormer_runs",
-                                    extra="epochs_50_lr_1e-5_hidden_size_612_depth_12_heads_12_decay_1e-2_betas_95e-2_999e-3"))
+                                    extra="epochs_200_lr_1e-5_hidden_size_612_depth_12_heads_12_decay_1e-2_betas_9e-1_98e-2"))
 
 save_model(stormer,
           "/var/scratch/ase347/DeepSummit/checkpoints",
-          "stormer_epochs_50_lr_1e-5_hidden_size_612_depth_12_heads_12_decay_1e-2_betas_95e-2_999e-3.pth")
+          "stormer_epochs_200_lr_1e-5_hidden_size_612_depth_12_heads_12_decay_1e-2_betas_9e-1_98e-2.pth")

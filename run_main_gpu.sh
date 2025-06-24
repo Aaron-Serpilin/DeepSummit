@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --time=50:00:00
+#SBATCH --time=100:00:00
 #SBATCH -N 1
 #SBATCH --ntasks-per-node=1
 #SBATCH -C RTX2080Ti
@@ -12,5 +12,5 @@
 module load cuda10.1/toolkit/10.1.243
 
 cd /var/scratch/ase347/DeepSummit
-/var/scratch/ase347/anaconda3/envs/deepsummit/bin/python src/scripts/train_saint.py
+/var/scratch/ase347/anaconda3/envs/deepsummit/bin/python src/scripts/train_stormer.py
 
